@@ -1036,18 +1036,7 @@ https://orgmode.org/manual/Custom-agenda-views.html
 #+END_SRC
 ** Google Calendar
 #+BEGIN_SRC emacs-lisp
-  (use-package org-gcal
-    :config
-    (setq org-gcal-client-id "1015007384617-5ee24vd0vao3le8pri7kf02fm25ope17.apps.googleusercontent.com"
-          org-gcal-client-secret "Q9F-WxncXS7dmwW-hdC8FSGU"
-          org-gcal-file-alist '(
-                                ("3.1415tr@gmail.com" . "d:/Piotr/Exocortex/Input/gcal.org")
-                                ("jvkrlj3ae0js8bhmjdg6t0jvt4@group.calendar.google.com" . "d:/Piotr/Exocortex/Input/ganiv.org")
-                                ))
-    :hook
-    (org-agenda-mode-hook . org-gcal-sync)
-    ; org-capture-after-finalize-hook
-  )
+  
 #+END_SRC
 ** HTML export
 #+BEGIN_SRC emacs-lisp
