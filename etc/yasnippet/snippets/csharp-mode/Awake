@@ -1,0 +1,8 @@
+# contributor : 
+# name : Awake
+# key: aw
+# --
+void Awake()
+{
+	$0
+}

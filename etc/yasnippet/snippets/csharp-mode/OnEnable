@@ -1,0 +1,8 @@
+# contributor : 
+# name : OnEnable
+# key: en
+# --
+void OnEnable()
+{
+	$0
+}

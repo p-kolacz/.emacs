@@ -1,0 +1,10 @@
+#contributor : 
+#name : ScriptableObject
+# key: so
+# --
+using UnityEngine;
+
+public class ${1:Name} : ScriptableObject
+{
+	$0
+}

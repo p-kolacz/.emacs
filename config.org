@@ -1,0 +1,1352 @@
+
+
+[[file:share/img/centaur.png]]
+* Initialize
+** Determine platform
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/lib/")
+  (require 'sysinfo)
+  (setq mswin (eq sysinfo-os-family 'Windows))
+  (setq wsl (eq sysinfo-os-type 'WSL))
+  (setq android (eq sysinfo-os-type 'Android))
+
+  ;; (setq mswin (string= system-type "windows-nt"))
+  ;; (setq wsl
+  ;;       (and
+  ;;        (string= system-type "gnu/linux")
+  ;;        (string-match "Linux.*Microsoft.*Linux" (shell-command-to-string "uname -a"))))
+#+END_SRC
+** Init
+#+BEGIN_SRC emacs-lisp
+  (set-language-environment "UTF-8")
+  ;; (set-locale-environment "pl_PL.UTF-8")
+  ;; (setq locale-coding-system 'utf-8)
+  ;; (prefer-coding-system 'utf-8)
+  ;; (set-default-coding-systems 'utf-8)
+  ;; (set-terminal-coding-system 'utf-8)
+  ;; (set-keyboard-coding-system 'utf-8)
+  (setq-default buffer-file-coding-system 'utf-8-unix)
+
+  ;; (setq custom-file "~/.emacs.d/custom.el")
+  ;; (load custom-file 'noerror)
+
+  (add-to-list 'default-frame-alist '(maximized))
+  (when mswin
+    (toggle-frame-maximized)
+  )
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  ;; (menu-bar-mode -1)
+#+END_SRC
+* Packages
+** Use-package
+https://github.com/jwiegley/use-package
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(setq package-enable-at-startup nil)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(package-initialize)
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+(setq use-package-always-ensure t)
+#+END_SRC
+
+** Early packages
+#+BEGIN_SRC emacs-lisp
+(use-package no-littering)
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+(setq custom-file (no-littering-expand-var-file-name "custom.el"))
+(load custom-file 'noerror)
+
+(require 'recentf)
+(add-to-list 'recentf-exclude no-littering-var-directory)
+(add-to-list 'recentf-exclude no-littering-etc-directory)
+
+
+(use-package diminish)
+#+END_SRC
+** Try
+#+BEGIN_SRC emacs-lisp
+  (use-package try :defer t)
+#+END_SRC
+* Apperance
+** Themes
+#+BEGIN_SRC emacs-lisp
+;;(use-package srcery-theme
+  ;;  :config
+   ;; (load-theme 'srcery t)
+;;)
+;; (use-package doom-themes)
+
+(use-package challenger-deep-theme)
+
+(load-theme 'challenger-deep t) ; t for run lisp code in theme
+#+END_SRC
+
+** Fonts
+
+http://www.modernemacs.com/post/prettify-mode/
+
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-compacting-font-caches t) ; mega imortant!
+
+  (use-package all-the-icons)
+
+  (set-face-attribute 'default nil
+                      ;;:family "DejaVu Sans Mono"
+                      :family "Consolas"
+                      :height 140
+                      :weight 'normal
+                      :width 'normal)
+
+  (global-prettify-symbols-mode t)
+ ; (use-package pretty-mode :config (global-pretty-mode t))
+#+END_SRC
+*** Font lock
+#+BEGIN_SRC emacs-lisp
+(require 'font-lock+)
+#+END_SRC
+** Modeline
+*** Telephone line
+#+BEGIN_SRC emacs-lisp
+  (use-package telephone-line)
+
+  ;; (setq telephone-line-lhs
+  ;;       '((evil   . (telephone-line-major-mode-segment))
+  ;;         (accent . (shackra-vc-info
+  ;;                    telephone-line-erc-modified-channels-segment
+  ;;                    telephone-line-process-segment))
+  ;;         (nil    . (telephone-line-minor-mode-segment
+  ;;                    telephone-line-buffer-segment))))
+  ;; (setq telephone-line-rhs
+  ;;       '(
+  ;;         (accent . (telephone-line-major-mode-segment))
+  ;;         (evil   . (telephone-line-airline-position-segment))))
+
+  (telephone-line-mode)
+#+END_SRC
+*** Spaceline
+#+BEGIN_SRC emacs-lisp :tangle no
+  ;;  (use-package spaceline
+   ;;   :config
+    ;;  (spaceline-spacemacs-theme)
+    ;;  (spaceline-helm-mode)
+   ;; )
+     ;; (use-package spaceline-all-the-icons 
+     ;;   :init
+     ;;   (setq spaceline-all-the-icons-separator-type 'slant)
+     ;;   :after spaceline
+     ;;   :config
+     ;;   (spaceline-all-the-icons-theme)
+     ;;   (spaceline-toggle-all-the-icons-buffer-position-on) ; Indicates the position through the buffer as a percentage
+     ;;   (spaceline-all-the-icons--setup-paradox)   
+     ;; ;;  (spaceline-all-the-icons--setup-neotree)
+     ;; )
+#+END_SRC
+** Buffers
+*** Parens
+#+BEGIN_SRC emacs-lisp
+;;  (show-paren-mode 1)
+  (setq-default blink-matching-paren 'jump-offscreen)
+  (setq-default blink-matching-delay 0.7)
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+END_SRC
+*** Rest
+https://github.com/TheBB/spaceline/
+https://github.com/domtronn/spaceline-all-the-icons.el
+https://github.com/m2ym/popwin-el/tree/95dea14c60019d6cccf9a3b33e0dec4e1f22c304
+https://github.com/Malabarba/beacon
+#+BEGIN_SRC emacs-lisp
+
+  (setq display-line-numbers-width-start t)
+  (setq display-line-numbers-grow-only t)
+  ;; (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+  ;; (global-display-line-numbers-mode 1)
+  (setq-default line-spacing 1) ; Add 1 pixel between lines
+  (setq-default truncate-lines 1)
+  (global-hl-line-mode t)
+  (setq x-stretch-cursor t)
+  (setq-default cursor-type 'bar)
+
+  ;; (use-package beacon
+  ;;   :diminish beacon-mode
+  ;;   :config
+  ;;   (beacon-mode 1)
+  ;;   (add-to-list 'beacon-dont-blink-major-modes 'dired-mode))
+#+END_SRC
+*** Centered window
+#+BEGIN_SRC emacs-lisp
+(use-package centered-window
+:config
+(centered-window-mode t))
+#+END_SRC
+** Frame
+#+BEGIN_SRC emacs-lisp
+;; (set-frame-parameter nil 'undecorated t)
+;;(set-frame-parameter (selected-frame) 'alpha '(100 . 85))
+(add-to-list 'default-frame-alist '(alpha . (100 . 85)))
+;; (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
+;; (set-frame-position (selected-frame) 100 100)
+#+END_SRC
+** Dashboard
+#+BEGIN_SRC emacs-lisp
+  (use-package dashboard
+    :config
+    (dashboard-setup-startup-hook)
+    (setq dashboard-items '((recents  . 5)
+                           (bookmarks . 5)
+                           (projects . 5)
+                           (agenda . 5)
+                           (registers . 5)))
+    (setq dashboard-startup-banner "~/.emacs.d/share/img/centaur.png")
+    (setq dashboard-banner-logo-title "Hello, Master.")
+;;    (setq dashboard-banner-logo-png "~/.emacs.d/img/centaur.png")
+)
+#+END_SRC
+* Frames/Windows
+** Eyebrowse
+#+BEGIN_SRC emacs-lisp
+; (use-package eyebrowse)
+#+END_SRC
+** Persp-mode
+#+BEGIN_SRC emacs-lisp
+;(use-package persp-mode :config (persp-mode 1))
+#+END_SRC
+* Behavior
+** QOL
+#+BEGIN_SRC emacs-lisp
+  (cua-mode 1) ; Enable ^Z, ^X, ^C, ^V, select with mouse and shift-cursor-movement
+  (setq cua-keep-region-after-copy t) ; Standard MS-Windows behaviour
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (setq ring-bell-function 'ignore)
+  (setq inhibit-splash-screen t)
+  (setq-default tab-width 4)
+  ;; (desktop-save-mode 1)
+ ;; (electric-pair-mode)
+  (global-auto-revert-mode)
+#+END_SRC
+** CRUX
+#+BEGIN_SRC emacs-lisp
+  (use-package crux
+    :bind
+    ("C-c o" . crux-open-with)
+
+    ;; lines
+    ("S-<return>" . crux-smart-open-line)
+    ("C-S-<return>" . crux-smart-open-line-above)
+    ([remap move-beginning-of-line] . crux-move-beginning-of-line)
+    ("C-<backspace>" . crux-kill-line-backwards)
+    ([remap kill-whole-line] . crux-kill-whole-line)
+    ([remap kill-line] . crux-smart-kill-line)
+    ("C-c d" . crux-duplicate-current-line-or-region)
+    ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
+  
+    ;; buffers
+    ("C-x 4 t" . crux-transpose-windows)
+    ("C-c r" . crux-rename-file-and-buffer)
+    ("C-c k" . crux-kill-other-buffers)
+  )
+#+END_SRC
+** Which Key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :diminish which-key-mode
+    :config
+    (which-key-mode)
+    (which-key-setup-minibuffer)
+    (setq max-mini-window-height 0.5)
+
+    ;; (which-key-setup-side-window-bottom)
+    ;; (which-key-setup-side-window-right)
+    ;; (which-key-setup-side-window-right-bottom)
+
+    ;; (set-face-attribute 'which-key-key-face nil :height 100)
+    ;; (set-face-attribute 'which-key-separator-face nil :height 100)
+    ;; (set-face-attribute 'which-key-group-description-face nil :height 100)
+    ;; (set-face-attribute 'which-key-command-description-face nil :height 100)
+    )
+#+END_SRC
+** Helm
+http://tuhdo.github.io/helm-intro.html
+https://github.com/emacs-helm/helm/wiki
+#+BEGIN_SRC emacs-lisp
+  (use-package helm
+    :diminish helm-mode
+    :config
+    (setq
+      helm-mode-fuzzy-match t
+      helm-M-x-fuzzy-match t
+      helm-buffers-fuzzy-matching t
+      helm-recentf-fuzzy-match t
+      helm-semantic-fuzzy-match t
+      helm-imenu-fuzzy-match t
+
+      helm-split-window-in-side-p nil
+      helm-display-header-line t
+      helm-ff-file-name-history-use-recentf t
+      helm-candidate-number-limit 100 ; less is faster, default 100
+
+      ; helm-autoresize-max-height 0
+      ; helm-autoresize-min-height 20
+      ; helm-display-function 'helm-display-buffer-in-own-frame
+      ; helm-display-buffer-reuse-frame t
+      ; helm-use-undecorated-frame-option t
+    )
+    (helm-mode t)
+    (helm-autoresize-mode t)
+    ;(set-face-attribute 'helm-source-header nil :height 240 :foreground "#c56ec3" :background nil)
+    (set-face-attribute 'helm-source-header nil :height 240 :foreground "#1e90ff")
+
+    :bind
+;    ("C-c h" . helm-command-prefix)
+    ("M-x" . helm-M-x)
+    ("C-x C-f" . helm-find-files)
+    ("M-y" . helm-show-kill-ring)
+    ("C-x b" . helm-mini)
+    ("C-c s" . helm-semantic-or-imenu)
+    ;("C-x C-b" . 'helm-buffers-list)
+  )
+(global-set-key (kbd "C-c h") 'helm-command-prefix)
+
+(use-package helm-ag)
+#+END_SRC
+** Avy
+https://github.com/abo-abo/avy
+#+BEGIN_SRC emacs-lisp
+  (use-package avy
+    :config
+    (avy-setup-default)
+    (setq avy-background t)
+    :bind
+    ("C-c C-j" . avy-resume)
+    ("H-<SPC>" . avy-goto-word-1))
+#+END_SRC
+** COMMENT Ivy
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :config
+    (ivy-mode)
+    (setq ivy-re-builders-alist
+      '((swiper . ivy--regex-plus)
+        (t . ivy--regex-fuzzy)
+    )))
+  (use-package counsel
+    :config
+    (counsel-mode))
+#+END_SRC
+** Common packages
+https://www.flycheck.org/
+https://github.com/abo-abo/avy
+
+#+BEGIN_SRC emacs-lisp
+
+    (use-package yasnippet
+  ;;    :defer t
+      :config
+      (yas-global-mode 1))
+    (use-package yasnippet-snippets
+    ;; :defer t
+  )
+#+END_SRC
+* Navigation
+** Dired
+#+BEGIN_SRC emacs-lisp
+  (define-key dired-mode-map (kbd "<backspace>") 'dired-up-directory)
+
+  (require 'dired-x)
+  (setq-default dired-omit-files-p t) ; this is buffer-local variable
+  (setq dired-omit-files
+        (concat dired-omit-files "\\|\\.meta$"))
+
+  dired-hide-details-mode
+  (setq ls-lisp-dirs-first t)
+  (setq delete-by-moving-to-trash t)
+
+  (use-package all-the-icons-dired
+    :hook
+    (dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+** Ranger
+#+BEGIN_SRC emacs-lisp :tangle no
+    (use-package ranger
+      :config
+      (setq ranger-dont-show-binary t)
+      (setq ranger-preview-delay 0.200)
+      (setq ranger-override-dired 'ranger)
+      (ranger-override-dired-mode t))
+#+END_SRC
+** Buffers
+#+BEGIN_SRC emacs-lisp :tangle no
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(setq ibuffer-show-empty-filter-groups nil)
+(setq ibuffer-saved-filter-groups
+  '(("groups"
+;;	 ("Emacs config" (filename . ".emacs.d"))
+     ("Dired" (mode . dired-mode))
+	 ("Org" (mode . org-mode))
+	 ("Web Dev" (or (mode . web-mode)
+                    (mode . html-mode)
+                    (mode . css-mode)))
+	 ("Magit" (name . "magit"))
+	 ("Help" (or (name . "\\*Help\\*")
+    		     (name . "\\*Apropos\\*")
+	    	     (name . "\\*info\\*")))
+     ("Emacs" (or (name . "^\\*scratch\\*$")
+                  (name . "^\\*.*\\*$")
+                  (name . "^\\*Warnings\\*$")))
+)))
+
+(add-hook 'ibuffer-mode-hook
+  '(lambda ()
+    (ibuffer-auto-mode 1)
+    (ibuffer-switch-to-saved-filter-groups "groups")))
+#+END_SRC
+** Scrolling
+#+BEGIN_SRC emacs-lisp
+  (setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ; 3 lines at a time
+  (setq mouse-wheel-progressive-speed nil) ; don't accelerate scrolling
+  (setq mouse-wheel-follow-mouse 't) ; scroll window under mouse
+
+  (setq scroll-step 1) ; keyboard scroll one line at a time
+  (setq scroll-conservatively 101) ; dont recenter point
+;;  (setq maximum-scroll-margin 0.5 scroll-margin most-positive-fixnum)
+  (setq scroll-margin 7)
+  ;(setq scroll-preserve-screen-position t)
+#+END_SRC
+** Swiper
+#+BEGIN_SRC emacs-lisp
+  (use-package swiper
+    :bind
+    ("C-s" . 'swiper))
+#+END_SRC
+** Recent Mode
+#+BEGIN_SRC emacs-lisp
+  (recentf-mode) ; Add menu-item "File--Open recent"
+#+END_SRC
+** Neotree
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package neotree
+    :config
+      (setq neo-smart-open t)
+      (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+      (setq neo-show-updir-line nil)
+      (setq neo-click-changes-root nil)
+      (setq neo-default-system-application "explorer.exe")
+      (setq inhibit-compacting-font-caches t)
+      (setq neo-window-fixed-size nil)
+      (add-to-list 'neo-hidden-regexp-list "\\.meta$")
+    :bind (
+      ([f8] . neotree-toggle)
+      :map neotree-mode-map
+         ("<backspace>" . neotree-select-up-node))
+    :hook
+      ('neotree-mode . (lambda() (setq cursor-type nil)))
+;;      ('neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
+    :custom-face
+      (neo-dir-link-face ((t (:family "Consolas" :height 110))))
+      (neo-file-link-face ((t (:family "Consolas" :height 110))))
+)
+   (add-hook 'neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
+   (eval-after-load "neotree"
+       '(add-to-list 'window-size-change-functions
+                     (lambda (frame)
+                       (let ((neo-window (neo-global--get-window)))
+                         (unless (null neo-window)
+                           (setq neo-window-width (window-width neo-window)))))))
+#+END_SRC
+** Treemacs
+#+BEGIN_SRC emacs-lisp
+    (use-package treemacs
+      :defer t
+      :bind
+      ([f8] . treemacs)
+      ("M-0"       . treemacs-select-window)
+      ("C-x t 1"   . treemacs-delete-other-windows)
+      ;; ("C-x t t"   . treemacs)
+      ("C-x t b"   . treemacs-bookmark)
+      ("C-x t C-f" . treemacs-find-file)
+      ("C-x t M-t" . treemacs-find-tag)
+  :config
+  (treemacs-git-mode 'deferred)
+  )
+
+    (use-package treemacs-projectile
+      :after treemacs projectile)
+
+    ;; (use-package treemacs-icons-dired
+    ;;   :after treemacs dired
+    ;;   :config (treemacs-icons-dired-mode))
+
+#+END_SRC
+** Windows
+#+BEGIN_SRC emacs-lisp
+(use-package transpose-frame)
+#+END_SRC
+* Global key bindings
+** Bindings
+#+BEGIN_SRC emacs-lisp
+  (define-key key-translation-map (kbd "ESC") (kbd "C-g"))
+  (global-set-key (kbd "C-/") 'comment-line)
+  (global-set-key [C-tab] 'other-window)
+  (global-set-key [M-f4] 'save-buffers-kill-emacs)
+  (global-set-key (kbd "C-x k") 'kill-this-buffer)
+  ;; (global-set-key "\C-a" 'mark-whole-buffer)
+  ;; (global-set-key "\C-f" 'isearch-forward)
+  ;; (define-key isearch-mode-map "\C-f" 'isearch-repeat-forward)
+  ;; (global-set-key "\C-o" 'find-file)
+  ;; (global-set-key "\C-s" 'save-buffer)
+  ;; (global-set-key "\C-w" 'kill-this-buffer)
+  ;; (global-set-key (kbd "C-S-o") 'open-line)
+  ;; (global-set-key (kbd "C-S-w") 'kill-region)
+  (global-set-key (kbd "RET") 'newline-and-indent) ; For programming language modes
+  ;; (global-set-key [C-delete] 'whack-whitespace)
+
+  ;; (global-set-key [S-return] '(lambda()
+  ;;                               (interactive)
+  ;;                               (end-of-line)
+  ;;                               (newline-and-indent)))
+#+END_SRC
+** Super key
+#+BEGIN_SRC emacs-lisp
+  (when mswin
+      (setq w32-pass-lwindow-to-system nil)
+      (setq w32-pass-rwindow-to-system nil)
+      (setq w32-lwindow-modifier 'super)
+      (setq w32-rwindow-modifier 'super)
+      (w32-register-hot-key [s-])
+      (setq w32-enable-caps-lock nil))
+#+END_SRC
+** Hyper key
+#+BEGIN_SRC emacs-lisp
+  (when mswin
+    (setq w32-pass-apps-to-system nil)
+    (setq w32-apps-modifier 'hyper) ; Menu/App key
+  )
+  (global-set-key (kbd "H-j") 'windmove-left)
+  (global-set-key (kbd "H-l") 'windmove-right)
+  (global-set-key (kbd "H-i") 'windmove-up)
+  (global-set-key (kbd "H-k") 'windmove-down)
+  (global-set-key (kbd "H-o") 'delete-window)
+  (global-set-key (kbd "H-u") 'delete-other-windows)
+  (global-set-key [H-S-right] (lambda() (interactive) (split-window-right) (windmove-right)))
+  (global-set-key [H-S-down] (lambda() (interactive) (split-window-below) (windmove-down)))
+  (global-set-key [H-C-up] 'enlarge-window)
+  (global-set-key [H-C-down] 'shrink-window)
+  (global-set-key [H-C-right] 'enlarge-window-horizontally)
+  (global-set-key [H-C-left] 'shrink-window-horizontally)
+
+  (global-set-key (kbd "H-w") 'copy-whole-word)
+  ;; (global-set-key (kbd "H-l") 'copy-whole-line)
+  (global-set-key (kbd "H-p") 'copy-whole-paragraph)
+  (global-set-key (kbd "H-d H-w") 'kill-whole-word)
+  (global-set-key (kbd "H-d H-d") 'kill-whole-line)
+  (global-set-key (kbd "H-d H-p") 'kill-whole-paragraph)
+#+END_SRC
+** F-keys
+#+BEGIN_SRC emacs-lisp
+  (global-set-key [f12] (lambda()
+    (interactive)
+    (find-file "~/.emacs.d/config.org")
+  ))
+  (global-set-key [S-f12] (lambda()
+    (interactive)
+    (find-file "~/.emacs.d/init.el")
+  ))
+#+END_SRC
+
+* Help
+** Helpful
+https://github.com/Wilfred/helpful
+#+BEGIN_SRC emacs-lisp
+  (use-package helpful
+    :bind
+    ("C-h f" . #'helpful-callable)
+    ("C-h v" . #'helpful-variable)
+    ("C-h k" . #'helpful-key)
+    ("C-c C-d" . #'helpful-at-point)
+    ("C-h F" . #'helpful-function)
+    ("C-h C" . #'helpful-command)
+  )
+#+END_SRC
+* Text Edit
+** Hungry delete
+#+BEGIN_SRC emacs-lisp
+  (use-package hungry-delete
+    :diminish hungry-delete-mode
+    :config
+    (global-hungry-delete-mode))
+
+  (use-package duplicate-thing
+    :bind
+    ("C-S-<down>". duplicate-thing))
+#+END_SRC
+** Expand region
+#+BEGIN_SRC emacs-lisp
+(use-package expand-region
+  :bind
+  ("H-e" . er/expand-region))
+#+END_SRC
+** Thesaurus
+#+BEGIN_SRC emacs-lisp
+(use-package powerthesaurus
+:bind
+("H-t" . powerthesaurus-lookup-word-dwim))
+#+END_SRC
+** Multiple cursors
+#+BEGIN_SRC emacs-lisp
+  (use-package multiple-cursors
+    :bind
+      ("H-f" . mc/edit-lines)
+      ("H-d" . mc/mark-next-like-this-word)
+      ("H-S-a" . mc/mark-previous-symbol-like-this)
+      ("H-t" . mc/mark-sgml-tag-pair)
+      ("H-n" . mc/mark-next-like-this)
+      ; ("C-d C-d" . mc/mark-all-like-this)
+  )
+#+END_SRC
+** Drag stuff
+#+BEGIN_SRC emacs-lisp
+  (use-package drag-stuff
+    :config
+    (drag-stuff-global-mode 1)
+    :bind (
+           ([M-S-up]   . drag-stuff-up)
+           ([M-S-down] . drag-stuff-down)))
+#+END_SRC
+** Spell checking
+#+BEGIN_SRC emacs-lisp
+(setq ispell-program-name (executable-find "hunspell")
+      ispell-dictionary "en_US")
+;      ispell-dictionary "pl_PL")
+
+
+;(use-package flyspell-lazy
+;:config
+;(flyspell-lazy-mode 1))
+#+END_SRC
+* Prog Modes
+** Error checking
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :config
+    (global-flycheck-mode))
+#+END_SRC
+** Auto Completion
+#+BEGIN_SRC emacs-lisp
+  (use-package company
+    :config
+    (global-company-mode)
+    (setq
+     company-idle-delay 0
+     company-show-numbers t
+     company-minimum-prefix-length 2
+     ))
+
+  ;; (use-package company-flx
+  ;;   :after company
+  ;;   ;; :hook
+  ;;   ;; (company-mode . (lambda () (add-to-list 'company-backends 'company-capf)))
+  ;;   :config
+  ;;   ;; (company-flx-mode +1))
+  ;;   (with-eval-after-load 'company
+  ;;     (add-hook 'company-mode-hook (lambda ()
+  ;;                                    (add-to-list 'company-backends 'company-capf)))
+  ;;     (company-flx-mode +1)))
+
+  (use-package company-quickhelp :config (company-quickhelp-mode))
+#+END_SRC
+** Highlight Mode
+#+BEGIN_SRC emacs-lisp
+(use-package idle-highlight-mode
+  :hook
+  (prog-mode . idle-highlight-mode))
+#+END_SRC
+** Magit
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :defer t
+  :bind
+  ("s-m" . magit-status))
+#+END_SRC
+** Project management
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :config
+    (setq projectile-indexing-method 'native
+          projectile-completion-system 'helm
+          ;; projectile-globally-ignored-files (append '(".meta") projectile-globally-ignored-files)
+          )
+    (projectile-mode)
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+    )
+
+  (use-package helm-projectile
+    :bind
+    ("s-p" . helm-projectile))
+#+END_SRC
+** Deployment
+https://github.com/cjohansson/emacs-ssh-deploy
+#+BEGIN_SRC emacs-lisp
+  (use-package ssh-deploy
+:defer t)
+#+END_SRC
+** Languages
+*** EmacsLisp
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda() 
+              (setq custom-tab-width 2)
+              (setq indent-tabs-mode nil)
+              )
+            )
+
+  (use-package package-lint)
+#+END_SRC
+*** C#
+**** Csharp-mode
+#+BEGIN_SRC emacs-lisp
+  (use-package csharp-mode
+    :hook
+    (csharp-mode . (lambda ()
+                     (mapc (lambda (pair) (push pair prettify-symbols-alist))
+                           '(
+                             ("=>" . "⇒")
+                             ("==" . "⩵")
+                             ;; ("" . "")
+                             ))
+                     (subword-mode 1)
+                     (electric-pair-local-mode)
+                     )))
+#+END_SRC
+**** sln-mode
+#+BEGIN_SRC emacs-lisp
+(require 'sln-mode)
+#+END_SRC
+**** Omnisharp
+#+BEGIN_SRC emacs-lisp
+      (use-package omnisharp
+        :after company
+        :init
+        (setq omnisharp-server-executable-path (if mswin "C:\\bin\\Omnisharp\\OmniSharp.exe" "~/omnisharp/run"))
+        (setq omnisharp-company-match-type 'company-match-server)
+              ;; omnisharp-company-match-sort-by-flx-score t)
+        :hook
+        (csharp-mode . omnisharp-mode)
+        :bind (:map omnisharp-mode-map
+                    ("s-<SPC>" . omnisharp-go-to-definition)
+                    ("s-S-q" . omnisharp-go-to-definition-other-window)
+                    ("s-u" . omnisharp-find-usages)
+                    ("s-i" . omnisharp-find-implementations)
+                    ("s-f" . omnisharp-fix-usings)
+                    ("s-r" . omnisharp-rename)
+                    ("s-<backspace>" . pop-tag-mark))
+        :config
+        (add-to-list 'company-backends 'company-omnisharp)
+        (define-key omnisharp-mode-map (kbd "s-<f5>") 'omnisharp-reload-solution)
+        ;;      (define-key omnisharp-mode-map (kbd "s-<f5>") (lambda() (interactive)(omnisharp-reload-solution) (flycheck-buffer)))
+        )
+
+  ;; (eval-after-load
+  ;;     'company
+  ;;   '(add-to-list 'company-backends 'company-omnisharp))
+#+END_SRC
+*** Web Mode
+http://web-mode.org/
+https://github.com/smihica/emmet-mode
+#+BEGIN_SRC emacs-lisp
+(use-package web-mode
+  :defer t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode)))
+(use-package company-web
+  :defer t
+  :config
+  (add-to-list 'company-backends 'company-web-html))
+
+(use-package php-mode :defer t)
+(use-package json-mode :defer t)
+(use-package emmet-mode
+  :hook
+  (web-mode css-mode)
+;;  :bind
+;;  ([tab] . 'emmet-expand-line)
+)
+#+END_SRC
+*** JavaScript
+#+BEGIN_SRC emacs-lisp
+;; (use-package js2-mode
+  ;; :config
+;;  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode)))
+#+END_SRC
+
+*** Clojure
+
+https://www.emacswiki.org/emacs/ParEdit
+
+#+BEGIN_SRC emacs-lisp
+    ;; (use-package clojure-mode
+    ;;   :mode (("\\.clj\\'" . clojure-mode)
+    ;;          ("\\.edn\\'" . clojure-mode)))
+
+    (use-package cider
+      :init
+      (setq cider-eldoc-display-context-dependent-info t)
+      :hook
+      (cider-repl-mode . cider-company-enable-fuzzy-completion)
+      (cider-mode . cider-company-enable-fuzzy-completion)
+      )
+      ;; :defer t
+      ;; :init (add-hook 'cider-mode-hook #'clj-refactor-mode))
+    (use-package flycheck-clojure
+      :config
+      (flycheck-clojure-setup)
+      :after flycheck)
+  ;; (use-package flycheck-pos-tip
+  ;; :after flycheck
+  ;; :config
+  ;; (flycheck-pos-tip-mode))
+
+  ;; (use-package paredit)
+#+END_SRC
+*** nginx
+#+BEGIN_SRC emacs-lisp
+(use-package company-nginx
+    :config
+    (eval-after-load 'nginx-mode
+      '(add-hook 'nginx-mode-hook #'company-nginx-keywords))
+    )
+#+END_SRC
+
+*** Markdown
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :config
+  (setq markdown-toggle-inline-images 1))
+#+END_SRC
+*** YAML
+#+BEGIN_SRC emacs-lisp
+;;(use-package yaml-mode
+  ;;:config
+;;  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
+#+END_SRC
+* Org Mode
+** Setup
+#+BEGIN_SRC emacs-lisp
+  (if mswin
+    (setq exocortex "d:/Piotr/Exocortex/")
+    (setq exocortex "/mnt/d/Piotr/Exocortex/")
+  )
+
+  (setq exocortex-main (concat exocortex "Life.org"))
+  (setq exocortex-links (concat exocortex "Links.org"))
+
+  (add-hook 'org-src-mode-hook
+            (lambda()
+              (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc))
+              ))
+
+  (use-package org-bullets
+      :hook
+      (org-mode . org-bullets-mode))
+
+  (setq org-startup-with-inline-images t)
+  (setq org-startup-indented t)
+  (setq org-hide-leading-stars t)
+  (setq org-support-shift-select t)
+  ;; (setq org-src-tab-acts-natively t)
+  (setq org-cycle-emulate-tab nil)
+  (setq org-agenda-files (list exocortex-main (concat exocortex "Input/gcal.org") (concat exocortex "Input/ganiv.org")))
+  (setq org-log-done t)
+  (setq org-confirm-elisp-link-function nil)
+  (setq calendar-week-start-day 1)
+  (setq org-tags-column -58)
+
+  ;; (add-hook 'org-mode-hook (lambda() (org-align-all-tags)))
+
+  ;; (add-hook 'focus-in-hook 
+  ;;   (lambda () (progn 
+  ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
+
+  ;; (add-hook 'focus-out-hook 
+  ;;   (lambda () (progn 
+  ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
+
+#+END_SRC
+** Capture templates
+
+https://orgmode.org/manual/Capture-templates.html
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates
+        '(
+          ("t" "Todo" entry
+           (file+headline exocortex-main "TODOs")
+           "* TODO %?\n  %i\n")
+
+          ("i" "Idea" entry
+           (file+headline exocortex-main "Ideas")
+           "* %?")
+
+          ("j" "Journal entry" entry
+           (file+headline exocortex-main "Journal")
+           "* %t %?")
+
+          ("o" "Opera link capture" entry
+           (file+headline exocortex-links "INBOX")
+           "* %a %U"
+           :immediate-finish t)
+
+          ("w" "Wishlist")
+          ("wb" "Books" entry
+           (file+olp exocortex-main "Wishlist" "Books")
+           "* %?")
+          ("wc" "Comix" entry
+           (file+olp exocortex-main "Wishlist" "Comix")
+           "* %?")
+          ("wg" "Gamez" entry
+           (file+olp exocortex-main "Wishlist" "Gamez")
+           "* %?")
+          ("wv" "Movies" entry
+           (file+olp exocortex-main "Wishlist" "Movies")
+           "* %?")
+          ("wm" "Music" entry
+           (file+olp exocortex-main "Wishlist" "Music")
+           "* %?")
+          ("ws" "Shows" entry
+           (file+olp exocortex-main "Wishlist" "Shows")
+           "* %?")
+          ))
+#+END_SRC
+
+** Bindings
+#+BEGIN_SRC emacs-lisp
+  ;; (define-key global-map "\C-cl" 'org-store-link)
+  (global-set-key  "\C-ca" 'org-agenda)
+  (define-key org-mode-map [C-up] 'org-previous-visible-heading)
+  (define-key org-mode-map [C-down] 'org-next-visible-heading)
+  (define-key org-mode-map [s-down] 'org-clock-in)
+  (define-key org-mode-map [s-up] 'org-clock-out)
+
+  (global-set-key [f5] (lambda()
+    (interactive)
+    (find-file (concat exocortex "Life.org"))
+  ))
+
+;;  (global-set-key [f6] (lambda () 
+;;      (interactive)
+ ;     (org-agenda nil "x")))
+
+  (global-set-key [f7] 'org-capture)
+#+END_SRC
+** Snippets
+#+BEGIN_SRC emacs-lisp
+  (setq org-src-window-setup 'current-window)
+  (add-to-list 'org-structure-template-alist
+               '("S" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
+#+END_SRC
+** org-protocol
+http://www.mediaonfire.com/blog/2017_07_21_org_protocol_firefox.html
+#+BEGIN_SRC emacs-lisp
+  (server-start)
+  (require 'org-protocol)
+  (setq org-protocol-default-template-key "o")
+#+END_SRC
+** Super Custom Agenda
+
+https://orgmode.org/manual/Custom-agenda-views.html
+
+#+BEGIN_SRC emacs-lisp
+  (defvar my/org-habit-show-graphs-everywhere t
+    "If non-nil, show habit graphs in all types of agenda buffers.
+
+  Normally, habits display consistency graphs only in
+  \"agenda\"-type agenda buffers, not in other types of agenda
+  buffers.  Set this variable to any non-nil variable to show
+  consistency graphs in all Org mode agendas.")
+
+  (defun my/org-agenda-mark-habits ()
+    "Mark all habits in current agenda for graph display.
+
+  This function enforces `my/org-habit-show-graphs-everywhere' by
+  marking all habits in the current agenda as such.  When run just
+  before `org-agenda-finalize' (such as by advice; unfortunately,
+  `org-agenda-finalize-hook' is run too late), this has the effect
+  of displaying consistency graphs for these habits.
+
+  When `my/org-habit-show-graphs-everywhere' is nil, this function
+  has no effect."
+    (when (and my/org-habit-show-graphs-everywhere
+           (not (get-text-property (point) 'org-series)))
+      (let ((cursor (point))
+            item data) 
+        (while (setq cursor (next-single-property-change cursor 'org-marker))
+          (setq item (get-text-property cursor 'org-marker))
+          (when (and item (org-is-habit-p item)) 
+            (with-current-buffer (marker-buffer item)
+              (setq data (org-habit-parse-todo item))) 
+            (put-text-property cursor
+                               (next-single-property-change cursor 'org-marker)
+                               'org-habit-p data))))))
+
+  (advice-add #'org-agenda-finalize :before #'my/org-agenda-mark-habits)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-super-agenda
+    :hook (org-mode . org-super-agenda-mode))
+
+  (setq org-agenda-block-separator ?┅)
+
+  (setq org-agenda-custom-commands
+        '(("x" "My Agenda"
+           (
+            (agenda ""
+                    (
+                     (org-agenda-span 5)
+                     (org-habit-show-habits nil)
+                     )
+                    )
+            (alltodo ""
+                     (
+                      (org-agenda-overriding-header "TODOs")
+                      ;;	(org-super-agenda-header-separator "--- ")
+                      (org-super-agenda-groups
+                       '(
+                         (:name "Habits" :habit t :order 2)
+                         (:name "Overdue" :and (:todo t :scheduled past ) :order 1)
+                         (:name "Important" :priority "A" :order 1)
+                         (:name "Phone calls" :tag "phone" :order 3)
+                         (:name "Shopping" :tag "shop" :order 10)
+                         (:name "EShopping" :tag "eshop" :order 11)
+                         (:name "TODO" :todo "TODO" :order 4)
+                         )
+                       ))
+                     )
+            ))))
+
+  (global-set-key [f6] (lambda() (interactive) (org-agenda nil "x")))
+#+END_SRC
+** Google Calendar
+#+BEGIN_SRC emacs-lisp
+  (use-package org-gcal
+    :config
+    (setq org-gcal-client-id "1015007384617-5ee24vd0vao3le8pri7kf02fm25ope17.apps.googleusercontent.com"
+          org-gcal-client-secret "Q9F-WxncXS7dmwW-hdC8FSGU"
+          org-gcal-file-alist '(
+                                ("3.1415tr@gmail.com" . "d:/Piotr/Exocortex/Input/gcal.org")
+                                ("jvkrlj3ae0js8bhmjdg6t0jvt4@group.calendar.google.com" . "d:/Piotr/Exocortex/Input/ganiv.org")
+                                ))
+    :hook
+    (org-agenda-mode-hook . org-gcal-sync)
+    ; org-capture-after-finalize-hook
+  )
+#+END_SRC
+** HTML export
+#+BEGIN_SRC emacs-lisp
+(setq org-html-validation-link nil)
+;(setq org-html-coding-system 'utf-8-unix)
+#+END_SRC
+** Export to PDF
+#+BEGIN_SRC emacs-lisp
+    (setq org-latex-pdf-process 
+      '("xelatex -interaction nonstopmode %f"
+         "xelatex -interaction nonstopmode %f"))   ;; for multiple passes
+(require 'ox-latex)
+(add-to-list 'org-latex-classes
+      '("legal-doc"
+
+   "\\documentclass[a4paper]{article}
+\\usepackage{fontspec}
+\\setmainfont[
+BoldFont=Trirong-Bold,
+ItalicFont=Trirong-Italic
+]{Trirong}
+\\setmonofont{Trirong}
+
+\\usepackage{hyperref}
+\\usepackage[margin=3cm]{geometry}
+\\usepackage[explicit]{titlesec}
+\\titleformat{\\section}{\\normalfont\\Large\\bfseries\\filcenter}{}{0em}{§\\ \\thesection\\\\ #1}
+
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{1em}
+
+\\usepackage{fancyhdr}
+\\usepackage{lastpage}
+
+\\pagestyle{fancy}
+\\renewcommand{\\headrulewidth}{0pt}%
+\\fancyhf{}%
+\\fancyfoot[C]{Strona \\thepage \\hspace{1pt} z \\pageref{LastPage}}%
+
+\\fancypagestyle{plain}{%
+  \\renewcommand{\\headrulewidth}{0pt}%
+  \\fancyhf{}%
+  \\fancyfoot[C]{Strona \\thepage \\hspace{1pt} z \\pageref{LastPage}}%
+}
+
+[NO-DEFAULT-PACKAGES]
+[NO-PACKAGES]"
+
+("\\section{%s}" . "\\section*{%s}")
+("\\subsection{%s}" . "\\subsection*{%s}")
+("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+("\\paragraph{%s}" . "\\paragraph*{%s}")
+("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+   ))
+
+(add-to-list 'org-latex-classes
+      '("generic"
+
+   "\\documentclass[a4paper]{article}
+\\usepackage{fontspec}
+\\setmainfont[
+BoldFont=Trirong-Bold,
+ItalicFont=Trirong-Italic
+]{Trirong}
+\\setmonofont{Trirong}
+
+\\usepackage{hyperref}
+\\usepackage[margin=3cm]{geometry}
+\\usepackage[explicit]{titlesec}
+
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{1em}
+
+\\usepackage{fancyhdr}
+\\usepackage{lastpage}
+
+\\pagestyle{fancy}
+\\renewcommand{\\headrulewidth}{0pt}%
+\\fancyhf{}%
+\\fancyfoot[C]{Strona \\thepage \\hspace{1pt} z \\pageref{LastPage}}%
+
+\\fancypagestyle{plain}{%
+  \\renewcommand{\\headrulewidth}{0pt}%
+  \\fancyhf{}%
+  \\fancyfoot[C]{Strona \\thepage \\hspace{1pt} z \\pageref{LastPage}}%
+}
+
+[NO-DEFAULT-PACKAGES]
+[NO-PACKAGES]"
+
+("\\section{%s}" . "\\section*{%s}")
+("\\subsection{%s}" . "\\subsection*{%s}")
+("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+("\\paragraph{%s}" . "\\paragraph*{%s}")
+("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+   ))
+
+    ;; "\\documentclass[16pt,a4paper]{article}
+    ;; \\usepackage{fontspec}
+    ;; \\defaultfontfeatures{Mapping=tex-text}
+    ;; \\setromanfont{Lora}
+    ;; \\setromanfont[BoldFont={Lora Bold},ItalicFont={Lora Italic}]{Lora}
+    ;; \\setsansfont{Verdana}
+    ;; \\setmonofont[Scale=0.8]{DejaVu Sans Mono}
+    ;; \\usepackage{geometry}
+    ;; \\geometry{a4paper, textwidth=6.5in, textheight=10in,marginparsep=7pt, marginparwidth=.6in}
+    ;; [NO-DEFAULT-PACKAGES]
+    ;; [NO-PACKAGES]"
+
+    ;; ("\\section{%s}" . "\\section*{%s}")
+    ;; ("\\subsection{%s}" . "\\subsection*{%s}")
+    ;; ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+    ;; ("\\paragraph{%s}" . "\\paragraph*{%s}")
+    ;; ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+#+END_SRC
+** Hugo
+#+BEGIN_SRC emacs-lisp
+(use-package ox-hugo
+  :after ox)
+;;(use-package ox-hugo-auto-export :ensure nil)    ;If you want the auto-exporting on file saves
+#+END_SRC
+* COMMENT UML
+#+BEGIN_SRC emacs-lisp
+  (use-package plantuml-mode
+    :mode "\\.puml\\'"
+    :config
+    (setq plantuml-jar-path "~/.emacs.d/lib/plantuml.jar"))
+#+END_SRC
+* Evil Mode
+** evil
+https://github.com/emacs-evil/evil
+https://github.com/noctuid/evil-guide
+https://github.com/emacs-evil/evil-surround
+https://github.com/Dewdrops/evil-extra-operator
+https://github.com/gabesoft/evil-mc
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package evil :config (evil-mode 1))
+
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode t)
+)
+
+(use-package evil-extra-operator
+    :config
+    (global-evil-extra-operator-mode 1))
+    
+(use-package evil-numbers
+    :bind (
+    :map evil-normal-state-map
+        ("<kp-add>" . 'evil-numbers/inc-at-pt)
+        ("<kp-subtract>" . 'evil-numbers/dec-at-pt)))
+
+(use-package evil-commentary :config (evil-commentary-mode))
+
+(use-package evil-mc :config (global-evil-mc-mode  1))
+#+END_SRC
+
+** Bindings
+#+BEGIN_SRC emacs-lisp :tangle no
+(defvar leader-map (make-sparse-keymap)
+  "Keymap for \"leader key\" shortcuts.")
+
+(define-key evil-normal-state-map (kbd "SPC") leader-map)
+
+(define-key leader-map "b" 'helm-buffer-list)
+
+(define-prefix-command 'leader-file-map)
+(define-key leader-map "f" 'leader-file-map)
+(define-key 'leader-file-map "f" 'helm-find-files)
+#+END_SRC
+* E-mail & Feeds
+
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package wanderlust)
+
+  (use-package elfeed :defer t)
+  (use-package elfeed-org
+    :defer 1
+    :config
+    (elfeed-org)
+    (setq rmh-elfeed-org-files (list "D:\\Piotr\\Exocortex\\Feeds.org")))
+
+  ;; (use-package elfeed-goodies
+  ;;   :config
+  ;;   (elfeed-goodies/setup))
+
+  (global-set-key [f9] 'elfeed)
+  (global-set-key [S-f9] (lambda()
+    (interactive)
+    (find-file "d:/Piotr/Exocortex/Feeds.org")))
+#+END_SRC
+
+* Tools
+** Browser
+#+BEGIN_SRC emacs-lisp
+(when wsl
+  (setq browse-url-generic-program  "~/browser.sh"
+            browse-url-generic-args     ""
+            browse-url-browser-function 'browse-url-generic))
+#+END_SRC
+** CharMap
+#+BEGIN_SRC emacs-lisp
+  (use-package charmap)
+
+;  (defface charmap-face '((t (:family "Symbola" :weight normal :slant normal :underline nil)))
+;    "Font lock face used to *charmap* buffer."
+;    :group 'charmap)
+#+END_SRC
+
+** Lorem Ipsum
+#+BEGIN_SRC emacs-lisp
+(use-package lorem-ipsum)
+#+END_SRC
+** SoS
+#+BEGIN_SRC emacs-lisp
+;; (use-package sos)
+#+END_SRC
+** Google this
+#+BEGIN_SRC emacs-lisp
+(use-package google-this
+  :config
+  (google-this-mode))
+#+END_SRC
+** Steam
+#+BEGIN_SRC emacs-lisp
+(use-package steam
+  :config
+  (setq steam-username "renes7"))
+#+END_SRC
+* Functions
+** Whack whitespace
+#+BEGIN_SRC emacs-lisp
+(defun whack-whitespace (arg)
+  "Delete all white space from point to the next word.  With prefix ARG
+  delete across newlines as well.  The only danger in this is that you
+  don't have to actually be at the end of a word to make it work.  It
+  skips over to the next whitespace and then whacks it all to the next
+  word."
+  (interactive "P")
+  (let ((regexp (if arg "[ \t\n]+" "[ \t]+")))
+    (re-search-forward regexp nil t)
+    (replace-match "" nil nil)))
+#+END_SRC
+** Disable all themes
+#+BEGIN_SRC emacs-lisp
+(defun disable-all-themes ()
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+#+END_SRC
+** Coping
+*** Copy whole word
+#+BEGIN_SRC emacs-lisp
+  (defun copy-whole-word ()
+    (interactive)
+    (save-excursion
+      (forward-char)
+      (backward-word)
+      (forward-char)
+      (copy-word)))
+#+END_SRC
+*** Copy whole line
+#+BEGIN_SRC emacs-lisp
+  (defun copy-whole-line ()
+    (interactive)
+    (save-excursion
+      (kill-new
+       (buffer-substring (point-at-bol) (point-at-eol)))))
+#+END_SRC
+*** Copy whole paragraph
+#+BEGIN_SRC emacs-lisp
+    (defun copy-whole-paragraph ()
+      (interactive)
+      (save-excursion
+        (forward-char)
+        (backward-paragraph)
+        (forward-char)
+        (copy-paragraph)))
+#+END_SRC
+** Deleting
+*** Delete whole word
+#+BEGIN_SRC emacs-lisp
+  (defun kill-whole-word ()
+    (interactive)
+    (forward-char)
+    (backward-word)
+    (kill-word 1))
+#+END_SRC
+*** Delete whole line
+#+BEGIN_SRC emacs-lisp
+
+#+END_SRC
+*** Delete whole paragraph
+#+BEGIN_SRC emacs-lisp
+  (defun kill-whole-paragraph ()
+    (interactive)
+    (forward-char 1)
+    (backward-paragraph)
+    (kill-paragraph 1))
+
+#+END_SRC

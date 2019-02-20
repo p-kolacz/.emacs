@@ -1,0 +1,8 @@
+# contributor : 
+# name : Start
+# key: st
+# --
+void Start()
+{
+	$0
+}

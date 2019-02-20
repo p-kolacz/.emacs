@@ -1,0 +1,10 @@
+# contributor : 
+# name : class : MonoBehaviour
+# key: mb
+# --
+using UnityEngine;
+
+public class ${1:Name} : MonoBehaviour
+{
+	$0
+}

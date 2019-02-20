@@ -1,0 +1,8 @@
+/*
+/*/
+
+!/.gitignore
+!/init.el
+!/config.org
+!/etc/
+!/lib/

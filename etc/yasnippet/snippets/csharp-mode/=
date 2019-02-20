@@ -1,0 +1,4 @@
+# name: log
+# key: =
+# --
+Debug.Log($1);$0

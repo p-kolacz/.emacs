@@ -1,0 +1,8 @@
+# contributor : 
+# name : Update
+# key: up
+# --
+void Update()
+{
+	$0
+}
