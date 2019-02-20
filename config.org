@@ -1266,7 +1266,7 @@ https://github.com/gabesoft/evil-mc
 #+BEGIN_SRC emacs-lisp
 (use-package steam
   :config
-  (setq steam-username "renes7"))
+  (setq steam-username ""))
 #+END_SRC
 * Functions
 ** Whack whitespace
