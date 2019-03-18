@@ -9,34 +9,22 @@
   (setq mswin (eq sysinfo-os-family 'Windows))
   (setq wsl (eq sysinfo-os-type 'WSL))
   (setq android (eq sysinfo-os-type 'Android))
-
-  ;; (setq mswin (string= system-type "windows-nt"))
-  ;; (setq wsl
-  ;;       (and
-  ;;        (string= system-type "gnu/linux")
-  ;;        (string-match "Linux.*Microsoft.*Linux" (shell-command-to-string "uname -a"))))
+  (setq linux (eq sysinfo-os-type 'Linux))
 #+END_SRC
 ** Init
 #+BEGIN_SRC emacs-lisp
   (set-language-environment "UTF-8")
-  ;; (set-locale-environment "pl_PL.UTF-8")
-  ;; (setq locale-coding-system 'utf-8)
-  ;; (prefer-coding-system 'utf-8)
-  ;; (set-default-coding-systems 'utf-8)
-  ;; (set-terminal-coding-system 'utf-8)
-  ;; (set-keyboard-coding-system 'utf-8)
   (setq-default buffer-file-coding-system 'utf-8-unix)
 
-  ;; (setq custom-file "~/.emacs.d/custom.el")
-  ;; (load custom-file 'noerror)
-
-  (add-to-list 'default-frame-alist '(maximized))
-  (when mswin
-    (toggle-frame-maximized)
-  )
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
-  ;; (menu-bar-mode -1)
+  (menu-bar-mode -1)
+
+  (when mswin
+    (toggle-frame-maximized)
+    (add-to-list 'default-frame-alist '(maximized))
+    )
+
 #+END_SRC
 * Packages
 ** Use-package
@@ -78,15 +66,12 @@ https://github.com/jwiegley/use-package
 * Apperance
 ** Themes
 #+BEGIN_SRC emacs-lisp
-;;(use-package srcery-theme
-  ;;  :config
-   ;; (load-theme 'srcery t)
-;;)
-;; (use-package doom-themes)
+  ;; (use-package srcery-theme)
+  ;; (use-package doom-themes)
+  ;; (use-package challenger-deep-theme)
+  (use-package one-themes)
 
-(use-package challenger-deep-theme)
-
-(load-theme 'challenger-deep t) ; t for run lisp code in theme
+  (load-theme 'one-dark t) ; t for run lisp code in theme
 #+END_SRC
 
 ** Fonts
@@ -94,19 +79,30 @@ https://github.com/jwiegley/use-package
 http://www.modernemacs.com/post/prettify-mode/
 
 #+BEGIN_SRC emacs-lisp
-  (setq inhibit-compacting-font-caches t) ; mega imortant!
+    (setq inhibit-compacting-font-caches t) ; mega imortant!
 
-  (use-package all-the-icons)
+    (use-package all-the-icons)
 
-  (set-face-attribute 'default nil
-                      ;;:family "DejaVu Sans Mono"
-                      :family "Consolas"
-                      :height 140
-                      :weight 'normal
-                      :width 'normal)
+  (when mswin
+    (set-face-attribute 'default nil
+                        ;;:family "DejaVu Sans Mono"
+                        :family "Consolas"
+                        :height 140
+                        :weight 'normal
+                        :width 'normal)
+    )
+  (when linux
+    (set-face-attribute 'default nil
+                        ;; :family "DejaVuSansMono Nerd Font"
+                        :family "Iosevka Nerd Font"
+                        ;; :family "Consolas"
+                        :height 150
+                        :weight 'normal
+                        :width 'normal)
+    )
 
-  (global-prettify-symbols-mode t)
- ; (use-package pretty-mode :config (global-pretty-mode t))
+    (global-prettify-symbols-mode t)
+   ; (use-package pretty-mode :config (global-pretty-mode t))
 #+END_SRC
 *** Font lock
 #+BEGIN_SRC emacs-lisp
@@ -181,17 +177,25 @@ https://github.com/Malabarba/beacon
   ;;   (beacon-mode 1)
   ;;   (add-to-list 'beacon-dont-blink-major-modes 'dired-mode))
 #+END_SRC
-*** Centered window
+*** COMMENT Zen Mode
 #+BEGIN_SRC emacs-lisp
-(use-package centered-window
-:config
-(centered-window-mode t))
+  (require 'zen-mode)
+  (global-set-key (kbd "<print>") 'zen-mode)
+#+END_SRC
+*** COMMENT Centered window
+#+BEGIN_SRC emacs-lisp
+  (use-package centered-window
+    :init
+    (setq cwm-frame-internal-border 120)
+    :config
+    (centered-window-mode t)
+    )
 #+END_SRC
 ** Frame
 #+BEGIN_SRC emacs-lisp
 ;; (set-frame-parameter nil 'undecorated t)
-;;(set-frame-parameter (selected-frame) 'alpha '(100 . 85))
-(add-to-list 'default-frame-alist '(alpha . (100 . 85)))
+;; (set-frame-parameter (selected-frame) 'alpha '(100 . 85))
+(if mswin (add-to-list 'default-frame-alist '(alpha . (100 . 85))))
 ;; (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
 ;; (set-frame-position (selected-frame) 100 100)
 #+END_SRC
@@ -200,7 +204,7 @@ https://github.com/Malabarba/beacon
   (use-package dashboard
     :config
     (dashboard-setup-startup-hook)
-    (setq dashboard-items '((recents  . 5)
+    (setq dashboard-items '((recents  . 15)
                            (bookmarks . 5)
                            (projects . 5)
                            (agenda . 5)
@@ -213,7 +217,9 @@ https://github.com/Malabarba/beacon
 * Frames/Windows
 ** Eyebrowse
 #+BEGIN_SRC emacs-lisp
-; (use-package eyebrowse)
+  (use-package eyebrowse
+    :config
+    (eyebrowse-mode))
 #+END_SRC
 ** Persp-mode
 #+BEGIN_SRC emacs-lisp
@@ -247,11 +253,13 @@ https://github.com/Malabarba/beacon
     ([remap kill-line] . crux-smart-kill-line)
     ("C-c d" . crux-duplicate-current-line-or-region)
     ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
-  
+
     ;; buffers
     ("C-x 4 t" . crux-transpose-windows)
     ("C-c r" . crux-rename-file-and-buffer)
     ("C-c k" . crux-kill-other-buffers)
+    ("C-c D" . crux-delete-file-and-buffer)
+    ("C-c c" . crux-copy-file-preserve-attributes)
   )
 #+END_SRC
 ** Which Key
@@ -277,45 +285,43 @@ https://github.com/Malabarba/beacon
 http://tuhdo.github.io/helm-intro.html
 https://github.com/emacs-helm/helm/wiki
 #+BEGIN_SRC emacs-lisp
-  (use-package helm
-    :diminish helm-mode
-    :config
-    (setq
-      helm-mode-fuzzy-match t
-      helm-M-x-fuzzy-match t
-      helm-buffers-fuzzy-matching t
-      helm-recentf-fuzzy-match t
-      helm-semantic-fuzzy-match t
-      helm-imenu-fuzzy-match t
+    (use-package helm
+      :diminish helm-mode
+      :config
+      (setq
+        helm-mode-fuzzy-match t
+        helm-M-x-fuzzy-match t
+        helm-buffers-fuzzy-matching t
+        helm-recentf-fuzzy-match t
+        helm-semantic-fuzzy-match t
+        helm-imenu-fuzzy-match t
 
-      helm-split-window-in-side-p nil
-      helm-display-header-line t
-      helm-ff-file-name-history-use-recentf t
-      helm-candidate-number-limit 100 ; less is faster, default 100
+        helm-split-window-in-side-p nil
+        helm-ff-file-name-history-use-recentf t
+        helm-candidate-number-limit 100 ; less is faster, default 100
 
-      ; helm-autoresize-max-height 0
-      ; helm-autoresize-min-height 20
-      ; helm-display-function 'helm-display-buffer-in-own-frame
-      ; helm-display-buffer-reuse-frame t
-      ; helm-use-undecorated-frame-option t
+        helm-display-function #'helm-display-buffer-in-own-frame
+        helm-show-completion-display-function #'helm-display-buffer-in-own-frame
+        helm-actions-inherit-frame-settings t
+        helm-display-header-line nil
+        ;; helm-mode-line-string "x"
+        )
+      (add-to-list 'helm-commands-using-frame 'completion-at-point)
+      (set-face-attribute 'helm-source-header nil :height 200)
+      (helm-mode t)
+
+      :bind
+      ("C-c h"   . helm-command-prefix)
+      ("M-x"     . helm-M-x)
+      ("C-x C-f" . helm-find-files)
+      ("M-y"     . helm-show-kill-ring)
+      ("C-x b"   . helm-mini)
+      ("C-c s"   . helm-semantic-or-imenu)
     )
-    (helm-mode t)
-    (helm-autoresize-mode t)
-    ;(set-face-attribute 'helm-source-header nil :height 240 :foreground "#c56ec3" :background nil)
-    (set-face-attribute 'helm-source-header nil :height 240 :foreground "#1e90ff")
 
-    :bind
-;    ("C-c h" . helm-command-prefix)
-    ("M-x" . helm-M-x)
-    ("C-x C-f" . helm-find-files)
-    ("M-y" . helm-show-kill-ring)
-    ("C-x b" . helm-mini)
-    ("C-c s" . helm-semantic-or-imenu)
-    ;("C-x C-b" . 'helm-buffers-list)
-  )
-(global-set-key (kbd "C-c h") 'helm-command-prefix)
+  ;; (global-set-key (kbd "C-c h") 'helm-command-prefix)
 
-(use-package helm-ag)
+  (use-package helm-ag)
 #+END_SRC
 ** Avy
 https://github.com/abo-abo/avy
@@ -327,6 +333,12 @@ https://github.com/abo-abo/avy
     :bind
     ("C-c C-j" . avy-resume)
     ("H-<SPC>" . avy-goto-word-1))
+#+END_SRC
+** Autosave on blur
+#+BEGIN_SRC emacs-lisp
+  (use-package focus-autosave-mode
+    :config
+    (focus-autosave-mode))
 #+END_SRC
 ** COMMENT Ivy
 #+BEGIN_SRC emacs-lisp
@@ -341,49 +353,26 @@ https://github.com/abo-abo/avy
     :config
     (counsel-mode))
 #+END_SRC
-** Common packages
-https://www.flycheck.org/
-https://github.com/abo-abo/avy
-
-#+BEGIN_SRC emacs-lisp
-
-    (use-package yasnippet
-  ;;    :defer t
-      :config
-      (yas-global-mode 1))
-    (use-package yasnippet-snippets
-    ;; :defer t
-  )
-#+END_SRC
 * Navigation
-** Dired
+** Mouse auto-select
+https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002dselection.html
 #+BEGIN_SRC emacs-lisp
-  (define-key dired-mode-map (kbd "<backspace>") 'dired-up-directory)
-
-  (require 'dired-x)
-  (setq-default dired-omit-files-p t) ; this is buffer-local variable
-  (setq dired-omit-files
-        (concat dired-omit-files "\\|\\.meta$"))
-
-  dired-hide-details-mode
-  (setq ls-lisp-dirs-first t)
-  (setq delete-by-moving-to-trash t)
-
-  (use-package all-the-icons-dired
-    :hook
-    (dired-mode . all-the-icons-dired-mode))
+(setq mouse-autoselect-window 0)
 #+END_SRC
-** Ranger
-#+BEGIN_SRC emacs-lisp :tangle no
-    (use-package ranger
-      :config
-      (setq ranger-dont-show-binary t)
-      (setq ranger-preview-delay 0.200)
-      (setq ranger-override-dired 'ranger)
-      (ranger-override-dired-mode t))
+** Scrolling
+#+BEGIN_SRC emacs-lisp
+  (setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ; 3 lines at a time
+  (setq mouse-wheel-progressive-speed nil) ; don't accelerate scrolling
+  (setq mouse-wheel-follow-mouse 't) ; scroll window under mouse
+
+  (setq scroll-step 1) ; keyboard scroll one line at a time
+  (setq scroll-conservatively 101) ; dont recenter point
+;;  (setq maximum-scroll-margin 0.5 scroll-margin most-positive-fixnum)
+  (setq scroll-margin 7)
+  ;(setq scroll-preserve-screen-position t)
 #+END_SRC
 ** Buffers
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (setq ibuffer-show-empty-filter-groups nil)
 (setq ibuffer-saved-filter-groups
@@ -408,17 +397,32 @@ https://github.com/abo-abo/avy
     (ibuffer-auto-mode 1)
     (ibuffer-switch-to-saved-filter-groups "groups")))
 #+END_SRC
-** Scrolling
+** Dired
 #+BEGIN_SRC emacs-lisp
-  (setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ; 3 lines at a time
-  (setq mouse-wheel-progressive-speed nil) ; don't accelerate scrolling
-  (setq mouse-wheel-follow-mouse 't) ; scroll window under mouse
+  (eval-after-load "dired" '(lambda ()
+							  (define-key dired-mode-map (kbd "<backspace>") 'dired-up-directory)))
 
-  (setq scroll-step 1) ; keyboard scroll one line at a time
-  (setq scroll-conservatively 101) ; dont recenter point
-;;  (setq maximum-scroll-margin 0.5 scroll-margin most-positive-fixnum)
-  (setq scroll-margin 7)
-  ;(setq scroll-preserve-screen-position t)
+  (require 'dired-x)
+  (setq-default dired-omit-files-p t) ; this is buffer-local variable
+  (setq dired-omit-files
+		(concat dired-omit-files "\\|\\.meta$"))
+
+  dired-hide-details-mode
+  (setq ls-lisp-dirs-first t)
+  (setq delete-by-moving-to-trash t)
+
+  (use-package all-the-icons-dired
+	:hook
+	(dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+** Ranger
+#+BEGIN_SRC emacs-lisp :tangle no
+    (use-package ranger
+      :config
+      (setq ranger-dont-show-binary t)
+      (setq ranger-preview-delay 0.200)
+      (setq ranger-override-dired 'ranger)
+      (ranger-override-dired-mode t))
 #+END_SRC
 ** Swiper
 #+BEGIN_SRC emacs-lisp
@@ -431,37 +435,38 @@ https://github.com/abo-abo/avy
   (recentf-mode) ; Add menu-item "File--Open recent"
 #+END_SRC
 ** Neotree
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package neotree
+#+BEGIN_SRC emacs-lisp
+  (use-package neotree
     :config
-      (setq neo-smart-open t)
-      (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-      (setq neo-show-updir-line nil)
-      (setq neo-click-changes-root nil)
+    (setq neo-smart-open t)
+    (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+    (setq neo-show-updir-line nil)
+    (setq neo-click-changes-root nil)
+    (when mswin
       (setq neo-default-system-application "explorer.exe")
-      (setq inhibit-compacting-font-caches t)
-      (setq neo-window-fixed-size nil)
-      (add-to-list 'neo-hidden-regexp-list "\\.meta$")
+      (setq inhibit-compacting-font-caches t))
+    (setq neo-window-fixed-size nil)
+    (add-to-list 'neo-hidden-regexp-list "\\.meta$")
     :bind (
-      ([f8] . neotree-toggle)
-      :map neotree-mode-map
-         ("<backspace>" . neotree-select-up-node))
+           ([f8] . neotree-toggle)
+           :map neotree-mode-map
+           ("<backspace>" . neotree-select-up-node))
     :hook
-      ('neotree-mode . (lambda() (setq cursor-type nil)))
-;;      ('neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
-    :custom-face
-      (neo-dir-link-face ((t (:family "Consolas" :height 110))))
-      (neo-file-link-face ((t (:family "Consolas" :height 110))))
-)
-   (add-hook 'neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
-   (eval-after-load "neotree"
-       '(add-to-list 'window-size-change-functions
-                     (lambda (frame)
-                       (let ((neo-window (neo-global--get-window)))
-                         (unless (null neo-window)
-                           (setq neo-window-width (window-width neo-window)))))))
+    ('neotree-mode . (lambda() (setq cursor-type nil)))
+    ;;      ('neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
+  ;;  :custom-face
+   ;; (neo-dir-link-face ((t (:family "Consolas" :height 110))))
+   ;; (neo-file-link-face ((t (:family "Consolas" :height 110))))
+    )
+  (add-hook 'neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
+  (eval-after-load "neotree"
+    '(add-to-list 'window-size-change-functions
+                  (lambda (frame)
+                    (let ((neo-window (neo-global--get-window)))
+                      (unless (null neo-window)
+                        (setq neo-window-width (window-width neo-window)))))))
 #+END_SRC
-** Treemacs
+** COMMENT Treemacs
 #+BEGIN_SRC emacs-lisp
     (use-package treemacs
       :defer t
@@ -489,6 +494,13 @@ https://github.com/abo-abo/avy
 #+BEGIN_SRC emacs-lisp
 (use-package transpose-frame)
 #+END_SRC
+** Awesome Tab
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/lib/awesome-tab")
+  (require 'awesome-tab)
+  (setq awesome-tab-style 'bar)
+  (awesome-tab-mode t)
+#+END_SRC
 * Global key bindings
 ** Bindings
 #+BEGIN_SRC emacs-lisp
@@ -497,21 +509,8 @@ https://github.com/abo-abo/avy
   (global-set-key [C-tab] 'other-window)
   (global-set-key [M-f4] 'save-buffers-kill-emacs)
   (global-set-key (kbd "C-x k") 'kill-this-buffer)
-  ;; (global-set-key "\C-a" 'mark-whole-buffer)
-  ;; (global-set-key "\C-f" 'isearch-forward)
-  ;; (define-key isearch-mode-map "\C-f" 'isearch-repeat-forward)
-  ;; (global-set-key "\C-o" 'find-file)
-  ;; (global-set-key "\C-s" 'save-buffer)
-  ;; (global-set-key "\C-w" 'kill-this-buffer)
-  ;; (global-set-key (kbd "C-S-o") 'open-line)
-  ;; (global-set-key (kbd "C-S-w") 'kill-region)
+  (global-set-key "\C-w" 'kill-this-buffer)
   (global-set-key (kbd "RET") 'newline-and-indent) ; For programming language modes
-  ;; (global-set-key [C-delete] 'whack-whitespace)
-
-  ;; (global-set-key [S-return] '(lambda()
-  ;;                               (interactive)
-  ;;                               (end-of-line)
-  ;;                               (newline-and-indent)))
 #+END_SRC
 ** Super key
 #+BEGIN_SRC emacs-lisp
@@ -551,16 +550,19 @@ https://github.com/abo-abo/avy
 #+END_SRC
 ** F-keys
 #+BEGIN_SRC emacs-lisp
+  (global-set-key [f9] 'bookmark-jump)
+  (global-set-key [C-f9] 'bookmark-set)
+
   (global-set-key [f12] (lambda()
     (interactive)
     (find-file "~/.emacs.d/config.org")
   ))
+
   (global-set-key [S-f12] (lambda()
     (interactive)
     (find-file "~/.emacs.d/init.el")
   ))
 #+END_SRC
-
 * Help
 ** Helpful
 https://github.com/Wilfred/helpful
@@ -582,7 +584,9 @@ https://github.com/Wilfred/helpful
     :diminish hungry-delete-mode
     :config
     (global-hungry-delete-mode))
-
+#+END_SRC
+** Duplicate thing
+#+BEGIN_SRC emacs-lisp
   (use-package duplicate-thing
     :bind
     ("C-S-<down>". duplicate-thing))
@@ -595,9 +599,9 @@ https://github.com/Wilfred/helpful
 #+END_SRC
 ** Thesaurus
 #+BEGIN_SRC emacs-lisp
-(use-package powerthesaurus
-:bind
-("H-t" . powerthesaurus-lookup-word-dwim))
+  (use-package synosaurus
+    :bind
+    ("H-t" . synosaurus-lookup))
 #+END_SRC
 ** Multiple cursors
 #+BEGIN_SRC emacs-lisp
@@ -622,6 +626,14 @@ https://github.com/Wilfred/helpful
 #+END_SRC
 ** Spell checking
 #+BEGIN_SRC emacs-lisp
+(setq ispell-dictionary-alist '(("en_US"
+                                              "[[:alpha:]]"
+                                              "[^[:alpha:]]"
+                                              "[']"
+                                              nil
+                                              ("-d" "en_US")
+                                              nil
+                                              utf-8)))
 (setq ispell-program-name (executable-find "hunspell")
       ispell-dictionary "en_US")
 ;      ispell-dictionary "pl_PL")
@@ -649,16 +661,17 @@ https://github.com/Wilfred/helpful
      company-minimum-prefix-length 2
      ))
 
-  ;; (use-package company-flx
-  ;;   :after company
-  ;;   ;; :hook
-  ;;   ;; (company-mode . (lambda () (add-to-list 'company-backends 'company-capf)))
-  ;;   :config
-  ;;   ;; (company-flx-mode +1))
-  ;;   (with-eval-after-load 'company
-  ;;     (add-hook 'company-mode-hook (lambda ()
-  ;;                                    (add-to-list 'company-backends 'company-capf)))
-  ;;     (company-flx-mode +1)))
+  (use-package company-flx
+    :after company
+    :hook
+    (company-mode . (lambda ()
+                      (add-to-list 'company-backends 'company-capf)
+                      (company-flx-mode +1)))
+  )
+    ;; (with-eval-after-load 'company
+      ;; (add-hook 'company-mode-hook (lambda ()
+                                     ;; (add-to-list 'company-backends 'company-capf)))
+      ;; (company-flx-mode +1)))
 
   (use-package company-quickhelp :config (company-quickhelp-mode))
 #+END_SRC
@@ -668,6 +681,14 @@ https://github.com/Wilfred/helpful
   :hook
   (prog-mode . idle-highlight-mode))
 #+END_SRC
+** Yasnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet
+    :config
+    (yas-global-mode 1))
+
+  (use-package yasnippet-snippets)
+#+END_SRC
 ** Magit
 #+BEGIN_SRC emacs-lisp
 (use-package magit
@@ -675,17 +696,19 @@ https://github.com/Wilfred/helpful
   :bind
   ("s-m" . magit-status))
 #+END_SRC
-** Project management
+** Projectile
 #+BEGIN_SRC emacs-lisp
   (use-package projectile
     :config
-    (setq projectile-indexing-method 'native
-          projectile-completion-system 'helm
+    ;;(setq projectile-completion-system 'helm
           ;; projectile-globally-ignored-files (append '(".meta") projectile-globally-ignored-files)
-          )
+      ;;    )
     (projectile-mode)
     (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
     )
+
+  (when linux (setq shell-file-name "/bin/sh"))
+  (when mswin (setq projectile-indexing-method 'native))
 
   (use-package helm-projectile
     :bind
@@ -771,7 +794,6 @@ https://github.com/smihica/emmet-mode
   :config
   (add-to-list 'company-backends 'company-web-html))
 
-(use-package php-mode :defer t)
 (use-package json-mode :defer t)
 (use-package emmet-mode
   :hook
@@ -779,6 +801,36 @@ https://github.com/smihica/emmet-mode
 ;;  :bind
 ;;  ([tab] . 'emmet-expand-line)
 )
+#+END_SRC
+*** PHP
+#+BEGIN_SRC emacs-lisp
+  (use-package php-mode
+    :config
+    (add-to-list 'auto-mode-alist (cons "config.*\\.php" 'php-mode))
+    :bind
+    (:map php-mode-map
+          ("C-c C-c" . (lambda ()
+                         (interactive)
+                         (get-buffer-create "*PHP*")
+                         (save-current-buffer
+                           (set-buffer "*PHP*")
+                           (erase-buffer))
+                         (save-excursion
+                           (push-mark (point))
+                           (push-mark (point-max) nil t)
+                           (goto-char (point-min))
+                           (php-send-region (point-min) (point-max))
+                           )
+                         (deactivate-mark)
+                         ))))
+
+  (use-package company-php
+    :hook
+    (php-mode . (lambda ()
+                       (ac-php-core-eldoc-setup) ;; enable eldoc
+                       (add-to-list 'company-backends 'company-ac-php-backend))
+                   )
+    )
 #+END_SRC
 *** JavaScript
 #+BEGIN_SRC emacs-lisp
@@ -816,6 +868,10 @@ https://www.emacswiki.org/emacs/ParEdit
 
   ;; (use-package paredit)
 #+END_SRC
+*** LUA
+#+BEGIN_SRC emacs-lisp
+(use-package lua-mode)
+#+END_SRC
 *** nginx
 #+BEGIN_SRC emacs-lisp
 (use-package company-nginx
@@ -840,44 +896,48 @@ https://www.emacswiki.org/emacs/ParEdit
 * Org Mode
 ** Setup
 #+BEGIN_SRC emacs-lisp
-  (if mswin
-    (setq exocortex "d:/Piotr/Exocortex/")
-    (setq exocortex "/mnt/d/Piotr/Exocortex/")
-  )
+    (cond
+     (mswin (setq exocortex "d:/Piotr/Exocortex/"))
+     (wsl (setq exocortex "/mnt/d/Piotr/Exocortex/"))
+     (t (setq exocortex "~/Exocortex/"))
+     )
 
-  (setq exocortex-main (concat exocortex "Life.org"))
-  (setq exocortex-links (concat exocortex "Links.org"))
+     (setq exocortex-main (concat exocortex "Life/Life.org"))
+     (setq exocortex-links (concat exocortex "Links/Links.org"))
 
-  (add-hook 'org-src-mode-hook
-            (lambda()
-              (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc))
-              ))
+     (add-hook 'org-src-mode-hook
+               (lambda()
+                 (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc))
+                 ))
 
-  (use-package org-bullets
-      :hook
-      (org-mode . org-bullets-mode))
+     (use-package org-bullets
+         :hook
+         (org-mode . org-bullets-mode))
 
-  (setq org-startup-with-inline-images t)
-  (setq org-startup-indented t)
-  (setq org-hide-leading-stars t)
-  (setq org-support-shift-select t)
-  ;; (setq org-src-tab-acts-natively t)
-  (setq org-cycle-emulate-tab nil)
-  (setq org-agenda-files (list exocortex-main (concat exocortex "Input/gcal.org") (concat exocortex "Input/ganiv.org")))
-  (setq org-log-done t)
-  (setq org-confirm-elisp-link-function nil)
-  (setq calendar-week-start-day 1)
-  (setq org-tags-column -58)
+     (setq org-startup-with-inline-images t)
+     (setq org-startup-indented t)
+     (setq org-hide-leading-stars t)
+     (setq org-support-shift-select t)
+     ;; (setq org-src-tab-acts-natively t)
+     (setq org-cycle-emulate-tab nil)
+    ;; (setq org-agenda-files (list exocortex-main (concat exocortex "Input/gcal.org") (concat exocortex "Input/ganiv.org")))
+      (setq org-agenda-files (list exocortex-main))
+     (setq org-log-done t)
+     (setq org-confirm-elisp-link-function nil)
+     (setq calendar-week-start-day 1)
+  ;;   (setq org-tags-column -58)
 
-  ;; (add-hook 'org-mode-hook (lambda() (org-align-all-tags)))
+  (add-to-list 'org-modules 'org-habit)
+  (org-load-modules-maybe t)
+     ;; (add-hook 'org-mode-hook (lambda() (org-align-all-tags)))
 
-  ;; (add-hook 'focus-in-hook 
-  ;;   (lambda () (progn 
-  ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
+     ;; (add-hook 'focus-in-hook 
+     ;;   (lambda () (progn 
+     ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
 
-  ;; (add-hook 'focus-out-hook 
-  ;;   (lambda () (progn 
-  ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
+     ;; (add-hook 'focus-out-hook 
+     ;;   (lambda () (progn 
+     ;;     (setq org-tags-column (- 250 (window-body-width)))) (org-align-all-tags)))
 
 #+END_SRC
 ** Capture templates
@@ -928,23 +988,23 @@ https://orgmode.org/manual/Capture-templates.html
 
 ** Bindings
 #+BEGIN_SRC emacs-lisp
-  ;; (define-key global-map "\C-cl" 'org-store-link)
-  (global-set-key  "\C-ca" 'org-agenda)
-  (define-key org-mode-map [C-up] 'org-previous-visible-heading)
-  (define-key org-mode-map [C-down] 'org-next-visible-heading)
-  (define-key org-mode-map [s-down] 'org-clock-in)
-  (define-key org-mode-map [s-up] 'org-clock-out)
+    ;; (define-key global-map "\C-cl" 'org-store-link)
+    (define-key org-mode-map [C-up] 'org-previous-visible-heading)
+    (define-key org-mode-map [C-down] 'org-next-visible-heading)
+    (define-key org-mode-map [s-down] 'org-clock-in)
+    (define-key org-mode-map [s-up] 'org-clock-out)
+    (define-key org-mode-map (kbd "H-s") 'org-refile)
 
-  (global-set-key [f5] (lambda()
-    (interactive)
-    (find-file (concat exocortex "Life.org"))
-  ))
+    (global-set-key [f5] (lambda()
+      (interactive)
+      (find-file exocortex-main)
+    ))
 
-;;  (global-set-key [f6] (lambda () 
-;;      (interactive)
- ;     (org-agenda nil "x")))
+  ;;  (global-set-key [f6] (lambda () 
+  ;;      (interactive)
+   ;     (org-agenda nil "x")))
 
-  (global-set-key [f7] 'org-capture)
+    (global-set-key [f7] 'org-capture)
 #+END_SRC
 ** Snippets
 #+BEGIN_SRC emacs-lisp
@@ -952,8 +1012,24 @@ https://orgmode.org/manual/Capture-templates.html
   (add-to-list 'org-structure-template-alist
                '("S" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
 #+END_SRC
+** Babel
+#+BEGIN_SRC emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages
+    '(
+        (shell . t)
+    )
+)
+#+END_SRC
 ** org-protocol
 http://www.mediaonfire.com/blog/2017_07_21_org_protocol_firefox.html
+#+BEGIN_SRC javascript
+javascript:location.href="org-protocol:///capture?url="+encodeURIComponent(location.href)+"&title="+encodeURIComponent(document.title||"[untitled page]")
+#+END_SRC
+
+#+BEGIN_SRC shell
+update-desktop-database ~/.local/share/applications/
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (server-start)
   (require 'org-protocol)
@@ -1210,7 +1286,10 @@ https://github.com/gabesoft/evil-mc
 (define-key 'leader-file-map "f" 'helm-find-files)
 #+END_SRC
 * E-mail & Feeds
-
+** gnus
+#+BEGIN_SRC emacs-lisp 	
+#+END_SRC
+** COMMENT elfeed
 #+BEGIN_SRC emacs-lisp
   ;; (use-package wanderlust)
 
@@ -1268,6 +1347,12 @@ https://github.com/gabesoft/evil-mc
   :config
   (setq steam-username ""))
 #+END_SRC
+** TODO.txt
+#+BEGIN_SRC emacs-lisp
+  (use-package todotxt
+    :init
+    (setq todotxt-file "~/Dropbox/todo.txt"))
+#+END_SRC
 * Functions
 ** Whack whitespace
 #+BEGIN_SRC emacs-lisp
@@ -1287,6 +1372,13 @@ https://github.com/gabesoft/evil-mc
 (defun disable-all-themes ()
   (interactive)
   (mapc #'disable-theme custom-enabled-themes))
+#+END_SRC
+** Load theme
+#+BEGIN_SRC emacs-lisp
+  (defun theme ()
+    (interactive)
+    (disable-all-themes)
+    (call-interactively 'load-theme))
 #+END_SRC
 ** Coping
 *** Copy whole word

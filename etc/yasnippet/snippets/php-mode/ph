@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: PHP open tag
+# key: ph
+# --
+<?php
