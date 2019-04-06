@@ -79,11 +79,11 @@ https://github.com/jwiegley/use-package
 http://www.modernemacs.com/post/prettify-mode/
 
 #+BEGIN_SRC emacs-lisp
-    (setq inhibit-compacting-font-caches t) ; mega imortant!
 
     (use-package all-the-icons)
 
   (when mswin
+    (setq inhibit-compacting-font-caches t) ; mega imortant!
     (set-face-attribute 'default nil
                         ;;:family "DejaVu Sans Mono"
                         :family "Consolas"
@@ -96,7 +96,8 @@ http://www.modernemacs.com/post/prettify-mode/
                         ;; :family "DejaVuSansMono Nerd Font"
                         :family "Iosevka Nerd Font"
                         ;; :family "Consolas"
-                        :height 150
+                        ;; :family "IBM 3270"
+                        :height 140
                         :weight 'normal
                         :width 'normal)
     )
@@ -104,7 +105,7 @@ http://www.modernemacs.com/post/prettify-mode/
     (global-prettify-symbols-mode t)
    ; (use-package pretty-mode :config (global-pretty-mode t))
 #+END_SRC
-*** Font lock
+*** COMMENT Font lock
 #+BEGIN_SRC emacs-lisp
 (require 'font-lock+)
 #+END_SRC
@@ -198,6 +199,10 @@ https://github.com/Malabarba/beacon
 (if mswin (add-to-list 'default-frame-alist '(alpha . (100 . 85))))
 ;; (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
 ;; (set-frame-position (selected-frame) 100 100)
+#+END_SRC
+** Cursor
+#+BEGIN_SRC emacs-lisp
+  (setq blink-cursor-blinks 0)
 #+END_SRC
 ** Dashboard
 #+BEGIN_SRC emacs-lisp
@@ -439,26 +444,36 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
   (use-package neotree
     :config
     (setq neo-smart-open t)
-    (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+    ;; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+    (setq neo-theme (if (display-graphic-p) 'ascii 'arrow))
     (setq neo-show-updir-line nil)
     (setq neo-click-changes-root nil)
-    (when mswin
-      (setq neo-default-system-application "explorer.exe")
-      (setq inhibit-compacting-font-caches t))
     (setq neo-window-fixed-size nil)
     (add-to-list 'neo-hidden-regexp-list "\\.meta$")
-    :bind (
-           ([f8] . neotree-toggle)
-           :map neotree-mode-map
-           ("<backspace>" . neotree-select-up-node))
+    (when mswin
+      (setq neo-default-system-application "explorer.exe")
+      ;; (setq inhibit-compacting-font-caches t)
+      )
+
+    :bind
+    (([f8] . neotree-toggle)
+     :map neotree-mode-map
+     ("<backspace>" . neotree-select-up-node))
+
     :hook
-    ('neotree-mode . (lambda() (setq cursor-type nil)))
+    ('neotree-mode . (lambda()
+                       (setq cursor-type nil)
+                       ;; (setq line-spacing nil)
+                       ))
     ;;      ('neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
-  ;;  :custom-face
-   ;; (neo-dir-link-face ((t (:family "Consolas" :height 110))))
-   ;; (neo-file-link-face ((t (:family "Consolas" :height 110))))
+    :custom-face
+    (neo-root-dir-face ((t (:height 110 :foreground "#00bfff"))))
+    (neo-dir-link-face ((t (:height 110 :foreground "#00bfff"))))
+    (neo-file-link-face ((t (:height 110 :foreground "#A9a9a9"))))
     )
+
   (add-hook 'neo-after-create-hook (lambda(&optional dummy) (display-line-numbers-mode -1)))
+
   (eval-after-load "neotree"
     '(add-to-list 'window-size-change-functions
                   (lambda (frame)
@@ -494,7 +509,7 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
 #+BEGIN_SRC emacs-lisp
 (use-package transpose-frame)
 #+END_SRC
-** Awesome Tab
+** COMMENT Awesome Tab
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/lib/awesome-tab")
   (require 'awesome-tab)
@@ -511,6 +526,16 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
   (global-set-key (kbd "C-x k") 'kill-this-buffer)
   (global-set-key "\C-w" 'kill-this-buffer)
   (global-set-key (kbd "RET") 'newline-and-indent) ; For programming language modes
+
+  (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+  (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
+  (defun my-insert-tab-char ()
+    "Insert a tab char. (ASCII 9, \t)"
+    (interactive)
+    (insert "\t"))
+
+  (global-set-key (kbd "TAB") 'my-insert-tab-char)
 #+END_SRC
 ** Super key
 #+BEGIN_SRC emacs-lisp
@@ -563,6 +588,30 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
     (find-file "~/.emacs.d/init.el")
   ))
 #+END_SRC
+** Hydra
+#+BEGIN_SRC emacs-lisp
+  (use-package hydra)
+
+  (global-set-key
+   (kbd "C-n")
+   (defhydra hydra-move
+     (:body-pre (next-line))
+     "move"
+     ("n" next-line)
+     ("p" previous-line)
+     ("f" forward-char)
+     ("b" backward-char)
+     ("a" beginning-of-line)
+     ("e" move-end-of-line)
+     ("v" scroll-up-command)
+     ;; Converting M-v to V here by analogy.
+     ("V" scroll-down-command)
+     ("l" recenter-top-bottom)))
+
+  ;; (global-set-key (kbd "C-q")
+                  ;; (defhydra hydra-quoted-insert
+                  
+#+END_SRC
 * Help
 ** Helpful
 https://github.com/Wilfred/helpful
@@ -579,6 +628,7 @@ https://github.com/Wilfred/helpful
 #+END_SRC
 * Text Edit
 ** Hungry delete
+https://github.com/nflath/hungry-delete
 #+BEGIN_SRC emacs-lisp
   (use-package hungry-delete
     :diminish hungry-delete-mode
@@ -644,6 +694,16 @@ https://github.com/Wilfred/helpful
 ;(flyspell-lazy-mode 1))
 #+END_SRC
 * Prog Modes
+** Editing
+*** Embrace
+#+BEGIN_SRC emacs-lisp
+  (use-package embrace
+    :bind
+    ("H-c" . embrace-commander)
+    :hook
+    (org-mode-hook . embrace-org-mode-hook)
+    )
+#+END_SRC
 ** Error checking
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
@@ -691,10 +751,17 @@ https://github.com/Wilfred/helpful
 #+END_SRC
 ** Magit
 #+BEGIN_SRC emacs-lisp
-(use-package magit
-  :defer t
-  :bind
-  ("s-m" . magit-status))
+  (use-package exec-path-from-shell
+    :config
+    (exec-path-from-shell-copy-env "SSH_AGENT_PID")
+    (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+  )
+
+  (use-package magit
+    :defer t
+    :bind
+    ("s-m" . magit-status)
+    )
 #+END_SRC
 ** Projectile
 #+BEGIN_SRC emacs-lisp
@@ -711,8 +778,10 @@ https://github.com/Wilfred/helpful
   (when mswin (setq projectile-indexing-method 'native))
 
   (use-package helm-projectile
-    :bind
-    ("s-p" . helm-projectile))
+    ;; :bind
+    ;; ("s-p" . helm-projectile))
+    :config
+    (helm-projectile-on))
 #+END_SRC
 ** Deployment
 https://github.com/cjohansson/emacs-ssh-deploy
@@ -787,7 +856,7 @@ https://github.com/smihica/emmet-mode
 (use-package web-mode
   :defer t
   :config
-  (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
+;;  (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode)))
 (use-package company-web
   :defer t
@@ -807,8 +876,16 @@ https://github.com/smihica/emmet-mode
   (use-package php-mode
     :config
     (add-to-list 'auto-mode-alist (cons "config.*\\.php" 'php-mode))
+    :hook
+    (php-mode . (lambda ()
+                  (interactive)
+                  (setq indent-tabs-mode t)))
     :bind
     (:map php-mode-map
+          ("C-c f" . ac-php-find-symbol-at-point)
+          ("C-c b" . ac-php-location-stack-back)
+          ("C-c h" . php-search-documentation)
+          ("C-c c" . php-complete-function)
           ("C-c C-c" . (lambda ()
                          (interactive)
                          (get-buffer-create "*PHP*")
@@ -868,6 +945,11 @@ https://www.emacswiki.org/emacs/ParEdit
 
   ;; (use-package paredit)
 #+END_SRC
+*** Haskell
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package intero)
+  (use-package haskell-mode)
+#+END_SRC
 *** LUA
 #+BEGIN_SRC emacs-lisp
 (use-package lua-mode)
@@ -892,6 +974,16 @@ https://www.emacswiki.org/emacs/ParEdit
 ;;(use-package yaml-mode
   ;;:config
 ;;  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
+#+END_SRC
+*** INI
+#+BEGIN_SRC emacs-lisp
+  (use-package ini-mode
+    :config
+     (add-to-list 'auto-mode-alist '("\\.ini\\'" . ini-mode)))
+#+END_SRC
+*** Fish Shell
+#+BEGIN_SRC emacs-lisp
+(use-package fish-mode)
 #+END_SRC
 * Org Mode
 ** Setup
@@ -991,8 +1083,8 @@ https://orgmode.org/manual/Capture-templates.html
     ;; (define-key global-map "\C-cl" 'org-store-link)
     (define-key org-mode-map [C-up] 'org-previous-visible-heading)
     (define-key org-mode-map [C-down] 'org-next-visible-heading)
-    (define-key org-mode-map [s-down] 'org-clock-in)
-    (define-key org-mode-map [s-up] 'org-clock-out)
+    (bind-key "C-c <down>" 'org-clock-in org-mode-map)
+    (bind-key "C-c <up>" 'org-clock-out org-mode-map)
     (define-key org-mode-map (kbd "H-s") 'org-refile)
 
     (global-set-key [f5] (lambda()
@@ -1109,6 +1201,14 @@ https://orgmode.org/manual/Custom-agenda-views.html
             ))))
 
   (global-set-key [f6] (lambda() (interactive) (org-agenda nil "x")))
+#+END_SRC
+** Thunderlink
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type "thunderlink" 'org-thunderlink-open)
+
+  (defun org-thunderlink-open (path)
+    "Opens an email in Thunderbird with ThunderLink."
+    (start-process "myname" nil "thunderbird" "-thunderlink" (concat "thunderlink:" path)))
 #+END_SRC
 ** Google Calendar
 #+BEGIN_SRC emacs-lisp
@@ -1234,13 +1334,6 @@ ItalicFont=Trirong-Italic
   :after ox)
 ;;(use-package ox-hugo-auto-export :ensure nil)    ;If you want the auto-exporting on file saves
 #+END_SRC
-* COMMENT UML
-#+BEGIN_SRC emacs-lisp
-  (use-package plantuml-mode
-    :mode "\\.puml\\'"
-    :config
-    (setq plantuml-jar-path "~/.emacs.d/lib/plantuml.jar"))
-#+END_SRC
 * Evil Mode
 ** evil
 https://github.com/emacs-evil/evil
@@ -1341,17 +1434,15 @@ https://github.com/gabesoft/evil-mc
   :config
   (google-this-mode))
 #+END_SRC
-** Steam
-#+BEGIN_SRC emacs-lisp
-(use-package steam
-  :config
-  (setq steam-username ""))
-#+END_SRC
 ** TODO.txt
+https://github.com/rpdillon/todotxt.el
 #+BEGIN_SRC emacs-lisp
-  (use-package todotxt
-    :init
-    (setq todotxt-file "~/Dropbox/todo.txt"))
+    (use-package todotxt
+      :init
+      (setq todotxt-file "~/Dropbox/Aplikacje/Simpletask/todo.txt")
+      :bind
+      ("C-c t" . todotxt)
+      )
 #+END_SRC
 * Functions
 ** Whack whitespace
