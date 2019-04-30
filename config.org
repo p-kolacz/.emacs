@@ -67,15 +67,15 @@ https://github.com/jwiegley/use-package
 ** Themes
 #+BEGIN_SRC emacs-lisp
   ;; (use-package srcery-theme)
-  ;; (use-package doom-themes)
+  (use-package doom-themes)
   ;; (use-package challenger-deep-theme)
   (use-package one-themes)
 
-  (load-theme 'one-dark t) ; t for run lisp code in theme
+;;  (load-theme 'one-dark t) ; t for run lisp code in theme
+  (load-theme 'doom-vibrant t) ; t for run lisp code in theme
 #+END_SRC
 
 ** Fonts
-
 http://www.modernemacs.com/post/prettify-mode/
 
 #+BEGIN_SRC emacs-lisp
@@ -110,7 +110,14 @@ http://www.modernemacs.com/post/prettify-mode/
 (require 'font-lock+)
 #+END_SRC
 ** Modeline
-*** Telephone line
+*** Doom modeline
+#+BEGIN_SRC emacs-lisp
+(use-package doom-modeline
+:config
+(doom-modeline-mode 1)
+)
+#+END_SRC
+*** COMMENT Telephone line
 #+BEGIN_SRC emacs-lisp
   (use-package telephone-line)
 
@@ -128,7 +135,7 @@ http://www.modernemacs.com/post/prettify-mode/
 
   (telephone-line-mode)
 #+END_SRC
-*** Spaceline
+*** COMMENT Spaceline
 #+BEGIN_SRC emacs-lisp :tangle no
   ;;  (use-package spaceline
    ;;   :config
@@ -147,6 +154,23 @@ http://www.modernemacs.com/post/prettify-mode/
      ;; )
 #+END_SRC
 ** Buffers
+*** Line
+#+BEGIN_SRC emacs-lisp
+  ;; (setq display-line-numbers-width-start t)
+  ;; (setq display-line-numbers-grow-only t)
+  ;; (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+  ;; (global-display-line-numbers-mode 1)
+
+  (setq-default line-spacing 1) ; Add 1 pixel between lines
+  (setq-default truncate-lines 1)
+  ;; (global-hl-line-mode t)
+
+#+END_SRC
+*** Cursor
+#+BEGIN_SRC emacs-lisp
+  (setq x-stretch-cursor t)
+  (setq-default cursor-type 'bar)
+#+END_SRC
 *** Parens
 #+BEGIN_SRC emacs-lisp
 ;;  (show-paren-mode 1)
@@ -154,29 +178,6 @@ http://www.modernemacs.com/post/prettify-mode/
   (setq-default blink-matching-delay 0.7)
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
-#+END_SRC
-*** Rest
-https://github.com/TheBB/spaceline/
-https://github.com/domtronn/spaceline-all-the-icons.el
-https://github.com/m2ym/popwin-el/tree/95dea14c60019d6cccf9a3b33e0dec4e1f22c304
-https://github.com/Malabarba/beacon
-#+BEGIN_SRC emacs-lisp
-
-  (setq display-line-numbers-width-start t)
-  (setq display-line-numbers-grow-only t)
-  ;; (add-hook 'prog-mode-hook #'display-line-numbers-mode)
-  ;; (global-display-line-numbers-mode 1)
-  (setq-default line-spacing 1) ; Add 1 pixel between lines
-  (setq-default truncate-lines 1)
-  (global-hl-line-mode t)
-  (setq x-stretch-cursor t)
-  (setq-default cursor-type 'bar)
-
-  ;; (use-package beacon
-  ;;   :diminish beacon-mode
-  ;;   :config
-  ;;   (beacon-mode 1)
-  ;;   (add-to-list 'beacon-dont-blink-major-modes 'dired-mode))
 #+END_SRC
 *** COMMENT Zen Mode
 #+BEGIN_SRC emacs-lisp
@@ -196,7 +197,9 @@ https://github.com/Malabarba/beacon
 #+BEGIN_SRC emacs-lisp
 ;; (set-frame-parameter nil 'undecorated t)
 ;; (set-frame-parameter (selected-frame) 'alpha '(100 . 85))
+
 (if mswin (add-to-list 'default-frame-alist '(alpha . (100 . 85))))
+
 ;; (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
 ;; (set-frame-position (selected-frame) 100 100)
 #+END_SRC
@@ -515,6 +518,16 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
   (require 'awesome-tab)
   (setq awesome-tab-style 'bar)
   (awesome-tab-mode t)
+
+  (defun awesome-tab-click-to-tab (event)
+    "Switch to buffer (obtained from EVENT) on clicking header line"
+    (interactive "e")
+    (let ((selected-tab-name
+          (string-trim (car (posn-string (event-start event))))))
+      (unless (string-match-p "^%-$" selected-tab-name)
+        (switch-to-buffer selected-tab-name))))
+
+  (global-set-key [header-line mouse-1] #'awesome-tab-click-to-tab)
 #+END_SRC
 * Global key bindings
 ** Bindings
@@ -535,7 +548,8 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
     (interactive)
     (insert "\t"))
 
-  (global-set-key (kbd "TAB") 'my-insert-tab-char)
+  ;; (global-set-key (kbd "TAB") 'my-insert-tab-char)
+  ;; (global-set-key "\C-i", 'indent-line)
 #+END_SRC
 ** Super key
 #+BEGIN_SRC emacs-lisp
@@ -783,11 +797,19 @@ https://github.com/nflath/hungry-delete
     :config
     (helm-projectile-on))
 #+END_SRC
-** Deployment
+** COMMENT Deployment
 https://github.com/cjohansson/emacs-ssh-deploy
 #+BEGIN_SRC emacs-lisp
   (use-package ssh-deploy
-:defer t)
+    :demand
+    :after hydra
+    :bind (("C-c C-z" . ssh-deploy-hydra/body))
+    :hook ((after-save . ssh-deploy-after-save)
+           (find-file . ssh-deploy-find-file))
+    :config
+    (ssh-deploy-line-mode) ;; If you want mode-line feature
+    (ssh-deploy-add-menu) ;; If you want menu-bar feature
+    )
 #+END_SRC
 ** Languages
 *** EmacsLisp
@@ -805,6 +827,7 @@ https://github.com/cjohansson/emacs-ssh-deploy
 **** Csharp-mode
 #+BEGIN_SRC emacs-lisp
   (use-package csharp-mode
+:defer t
     :hook
     (csharp-mode . (lambda ()
                      (mapc (lambda (pair) (push pair prettify-symbols-alist))
@@ -824,6 +847,7 @@ https://github.com/cjohansson/emacs-ssh-deploy
 **** Omnisharp
 #+BEGIN_SRC emacs-lisp
       (use-package omnisharp
+:defer t
         :after company
         :init
         (setq omnisharp-server-executable-path (if mswin "C:\\bin\\Omnisharp\\OmniSharp.exe" "~/omnisharp/run"))
@@ -856,7 +880,7 @@ https://github.com/smihica/emmet-mode
 (use-package web-mode
   :defer t
   :config
-;;  (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("views\\/.*\\.php\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode)))
 (use-package company-web
   :defer t
@@ -865,6 +889,7 @@ https://github.com/smihica/emmet-mode
 
 (use-package json-mode :defer t)
 (use-package emmet-mode
+:defer t
   :hook
   (web-mode css-mode)
 ;;  :bind
@@ -874,7 +899,8 @@ https://github.com/smihica/emmet-mode
 *** PHP
 #+BEGIN_SRC emacs-lisp
   (use-package php-mode
-    :config
+:defer t   
+   :config
     (add-to-list 'auto-mode-alist (cons "config.*\\.php" 'php-mode))
     :hook
     (php-mode . (lambda ()
@@ -902,7 +928,8 @@ https://github.com/smihica/emmet-mode
                          ))))
 
   (use-package company-php
-    :hook
+:defer t 
+   :hook
     (php-mode . (lambda ()
                        (ac-php-core-eldoc-setup) ;; enable eldoc
                        (add-to-list 'company-backends 'company-ac-php-backend))
@@ -916,6 +943,13 @@ https://github.com/smihica/emmet-mode
 ;;  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode)))
 #+END_SRC
 
+*** JSX
+#+BEGIN_SRC emacs-lisp
+  (use-package rjsx-mode
+:defer t   
+ :config
+    (add-to-list 'auto-mode-alist '("app\\/.*\\.js\\'" . rjsx-mode)))
+#+END_SRC
 *** Clojure
 
 https://www.emacswiki.org/emacs/ParEdit
@@ -926,7 +960,8 @@ https://www.emacswiki.org/emacs/ParEdit
     ;;          ("\\.edn\\'" . clojure-mode)))
 
     (use-package cider
-      :init
+:defer t      
+:init
       (setq cider-eldoc-display-context-dependent-info t)
       :hook
       (cider-repl-mode . cider-company-enable-fuzzy-completion)
@@ -935,7 +970,8 @@ https://www.emacswiki.org/emacs/ParEdit
       ;; :defer t
       ;; :init (add-hook 'cider-mode-hook #'clj-refactor-mode))
     (use-package flycheck-clojure
-      :config
+:defer t      
+:config
       (flycheck-clojure-setup)
       :after flycheck)
   ;; (use-package flycheck-pos-tip
@@ -945,19 +981,22 @@ https://www.emacswiki.org/emacs/ParEdit
 
   ;; (use-package paredit)
 #+END_SRC
-*** Haskell
+*** COMMENT Haskell
 #+BEGIN_SRC emacs-lisp
   ;; (use-package intero)
   (use-package haskell-mode)
 #+END_SRC
 *** LUA
 #+BEGIN_SRC emacs-lisp
-(use-package lua-mode)
+(use-package lua-mode
+:defer t
+)
 #+END_SRC
 *** nginx
 #+BEGIN_SRC emacs-lisp
 (use-package company-nginx
-    :config
+:defer t    
+:config
     (eval-after-load 'nginx-mode
       '(add-hook 'nginx-mode-hook #'company-nginx-keywords))
     )
@@ -966,7 +1005,8 @@ https://www.emacswiki.org/emacs/ParEdit
 *** Markdown
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
-  :config
+:defer t  
+:config
   (setq markdown-toggle-inline-images 1))
 #+END_SRC
 *** YAML
@@ -978,12 +1018,14 @@ https://www.emacswiki.org/emacs/ParEdit
 *** INI
 #+BEGIN_SRC emacs-lisp
   (use-package ini-mode
-    :config
+:defer t   
+ :config
      (add-to-list 'auto-mode-alist '("\\.ini\\'" . ini-mode)))
 #+END_SRC
 *** Fish Shell
 #+BEGIN_SRC emacs-lisp
-(use-package fish-mode)
+(use-package fish-mode
+:defer t)
 #+END_SRC
 * Org Mode
 ** Setup
@@ -991,7 +1033,7 @@ https://www.emacswiki.org/emacs/ParEdit
     (cond
      (mswin (setq exocortex "d:/Piotr/Exocortex/"))
      (wsl (setq exocortex "/mnt/d/Piotr/Exocortex/"))
-     (t (setq exocortex "~/Exocortex/"))
+     (t (setq exocortex "~/Piotr/Exocortex/"))
      )
 
      (setq exocortex-main (concat exocortex "Life/Life.org"))
@@ -1434,7 +1476,7 @@ https://github.com/gabesoft/evil-mc
   :config
   (google-this-mode))
 #+END_SRC
-** TODO.txt
+** COMMENT TODO.txt
 https://github.com/rpdillon/todotxt.el
 #+BEGIN_SRC emacs-lisp
     (use-package todotxt
@@ -1444,7 +1486,25 @@ https://github.com/rpdillon/todotxt.el
       ("C-c t" . todotxt)
       )
 #+END_SRC
+** TODO.txt
+#+BEGIN_SRC emacs-lisp
+  (use-package todotxt-mode
+    :config
+    (setq todotxt-default-file (expand-file-name "~/Dropbox/Aplikacje/Simpletask/todo.txt"))
+    :bind
+     ("C-c i" . todotxt-add-todo)
+     ("C-c t" . todotxt-open-file)
+  )
+#+END_SRC
 * Functions
+** Indent buffer
+#+BEGIN_SRC emacs-lisp
+  (defun indent-whole-buffer ()
+    "indent whole buffer"
+    (interactive)
+    (delete-trailing-whitespace)
+    (indent-region (point-min) (point-max) nil))
+#+END_SRC
 ** Whack whitespace
 #+BEGIN_SRC emacs-lisp
 (defun whack-whitespace (arg)
