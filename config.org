@@ -195,12 +195,12 @@ http://www.modernemacs.com/post/prettify-mode/
 #+END_SRC
 ** Frame
 #+BEGIN_SRC emacs-lisp
-;; (set-frame-parameter nil 'undecorated t)
-;; (set-frame-parameter (selected-frame) 'alpha '(100 . 85))
+  ;; (set-frame-parameter nil 'undecorated t)
+  ;; (set-frame-parameter (selected-frame) 'alpha '(100 . 85))
 
-(if mswin (add-to-list 'default-frame-alist '(alpha . (100 . 85))))
+  (if mswin (add-to-list 'default-frame-alist '(alpha . (100 . 85))))
 
-;; (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
+;;  (set-frame-size (selected-frame) (- (nth 2 (frame-monitor-workarea)) 200) (- (nth 3 (frame-monitor-workarea)) 200) t)
 ;; (set-frame-position (selected-frame) 100 100)
 #+END_SRC
 ** Cursor
@@ -566,7 +566,7 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
   (when mswin
     (setq w32-pass-apps-to-system nil)
     (setq w32-apps-modifier 'hyper) ; Menu/App key
-  )
+    )
   (global-set-key (kbd "H-j") 'windmove-left)
   (global-set-key (kbd "H-l") 'windmove-right)
   (global-set-key (kbd "H-i") 'windmove-up)
@@ -586,6 +586,8 @@ https://www.gnu.org/software/emacs/manual/html_node/elisp/Mouse-Window-Auto_002d
   (global-set-key (kbd "H-d H-w") 'kill-whole-word)
   (global-set-key (kbd "H-d H-d") 'kill-whole-line)
   (global-set-key (kbd "H-d H-p") 'kill-whole-paragraph)
+
+  (global-set-key [H-tab] (lambda() (interactive) (insert "\t")))
 #+END_SRC
 ** F-keys
 #+BEGIN_SRC emacs-lisp
@@ -772,10 +774,16 @@ https://github.com/nflath/hungry-delete
   )
 
   (use-package magit
-    :defer t
+    ;; :defer t
     :bind
     ("s-m" . magit-status)
     )
+
+  ;; (use-package magit-todos
+  ;;   ;; :defer t
+  ;;   :commands (magit-todos-mode)
+  ;;   :hook
+  ;;   (magit-mode . magit-todos-mode))
 #+END_SRC
 ** Projectile
 #+BEGIN_SRC emacs-lisp
@@ -797,19 +805,26 @@ https://github.com/nflath/hungry-delete
     :config
     (helm-projectile-on))
 #+END_SRC
-** COMMENT Deployment
+** Deployment
 https://github.com/cjohansson/emacs-ssh-deploy
 #+BEGIN_SRC emacs-lisp
   (use-package ssh-deploy
-    :demand
-    :after hydra
-    :bind (("C-c C-z" . ssh-deploy-hydra/body))
-    :hook ((after-save . ssh-deploy-after-save)
-           (find-file . ssh-deploy-find-file))
-    :config
-    (ssh-deploy-line-mode) ;; If you want mode-line feature
-    (ssh-deploy-add-menu) ;; If you want menu-bar feature
-    )
+         :ensure t
+         :demand
+:defer t
+         :after hydra
+         ;;:hook ((after-save . ssh-deploy-after-save) ;; If you want automatic upload support
+                ;;(find-file . ssh-deploy-find-file) ;; If you want menu-bar feature
+           ;;     )
+         :config
+         (ssh-deploy-line-mode) ;; If you want mode-line feature
+         (ssh-deploy-add-menu) ;; If you want menu-bar feature
+         (ssh-deploy-hydra "C-c C-z") ;; If you want the hydra feature
+       )
+#+END_SRC
+** Compilation
+#+BEGIN_SRC emacs-lisp
+(setq compilation-scroll-output 'first-error)
 #+END_SRC
 ** Languages
 *** EmacsLisp
@@ -827,7 +842,7 @@ https://github.com/cjohansson/emacs-ssh-deploy
 **** Csharp-mode
 #+BEGIN_SRC emacs-lisp
   (use-package csharp-mode
-:defer t
+    :defer t
     :hook
     (csharp-mode . (lambda ()
                      (mapc (lambda (pair) (push pair prettify-symbols-alist))
@@ -838,6 +853,7 @@ https://github.com/cjohansson/emacs-ssh-deploy
                              ))
                      (subword-mode 1)
                      (electric-pair-local-mode)
+                     ;; (setq projectile-project-compilation-cmd #'msbuild)
                      )))
 #+END_SRC
 **** sln-mode
@@ -846,28 +862,30 @@ https://github.com/cjohansson/emacs-ssh-deploy
 #+END_SRC
 **** Omnisharp
 #+BEGIN_SRC emacs-lisp
-      (use-package omnisharp
-:defer t
-        :after company
-        :init
-        (setq omnisharp-server-executable-path (if mswin "C:\\bin\\Omnisharp\\OmniSharp.exe" "~/omnisharp/run"))
-        (setq omnisharp-company-match-type 'company-match-server)
-              ;; omnisharp-company-match-sort-by-flx-score t)
-        :hook
-        (csharp-mode . omnisharp-mode)
-        :bind (:map omnisharp-mode-map
-                    ("s-<SPC>" . omnisharp-go-to-definition)
-                    ("s-S-q" . omnisharp-go-to-definition-other-window)
-                    ("s-u" . omnisharp-find-usages)
-                    ("s-i" . omnisharp-find-implementations)
-                    ("s-f" . omnisharp-fix-usings)
-                    ("s-r" . omnisharp-rename)
-                    ("s-<backspace>" . pop-tag-mark))
-        :config
-        (add-to-list 'company-backends 'company-omnisharp)
-        (define-key omnisharp-mode-map (kbd "s-<f5>") 'omnisharp-reload-solution)
-        ;;      (define-key omnisharp-mode-map (kbd "s-<f5>") (lambda() (interactive)(omnisharp-reload-solution) (flycheck-buffer)))
-        )
+  (use-package omnisharp
+    :defer t
+    :after company
+    :init
+    ;; (setq omnisharp-server-executable-path (if mswin "C:\\bin\\Omnisharp\\OmniSharp.exe" "~/omnisharp/run"))
+    (setq omnisharp-server-executable-path (if mswin "C:\\bin\\Omnisharp\\OmniSharp.exe" "~/.local/lib/omnisharp/run"))
+    (setq omnisharp-company-match-type 'company-match-server)
+    ;; omnisharp-company-match-sort-by-flx-score t)
+    :hook
+    (csharp-mode . omnisharp-mode)
+    :bind (:map omnisharp-mode-map
+                ("H-<SPC>" . omnisharp-go-to-definition)
+                ("H-S-q" . omnisharp-go-to-definition-other-window)
+                ("H-u" . omnisharp-find-usages)
+                ("H-i" . omnisharp-find-implementations)
+                ("H-f" . omnisharp-fix-usings)
+                ("H-r" . omnisharp-rename)
+                ("H-<backspace>" . pop-tag-mark)
+                ("H-<f5>" . 'omnisharp-reload-solution)
+                )
+    :config
+    (add-to-list 'company-backends 'company-omnisharp)
+    ;;      (define-key omnisharp-mode-map (kbd "s-<f5>") (lambda() (interactive)(omnisharp-reload-solution) (flycheck-buffer)))
+    )
 
   ;; (eval-after-load
   ;;     'company
@@ -902,6 +920,7 @@ https://github.com/smihica/emmet-mode
 :defer t   
    :config
     (add-to-list 'auto-mode-alist (cons "config.*\\.php" 'php-mode))
+(setq ac-php-tags-path (expand-file-name "~/.cache/ac-php") )
     :hook
     (php-mode . (lambda ()
                   (interactive)
@@ -949,6 +968,11 @@ https://github.com/smihica/emmet-mode
 :defer t   
  :config
     (add-to-list 'auto-mode-alist '("app\\/.*\\.js\\'" . rjsx-mode)))
+#+END_SRC
+*** GDScript
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package gdscript-mode)
+  (require 'godot-gdscript)
 #+END_SRC
 *** Clojure
 
@@ -1033,7 +1057,7 @@ https://www.emacswiki.org/emacs/ParEdit
     (cond
      (mswin (setq exocortex "d:/Piotr/Exocortex/"))
      (wsl (setq exocortex "/mnt/d/Piotr/Exocortex/"))
-     (t (setq exocortex "~/Piotr/Exocortex/"))
+     (t (setq exocortex "~/Cloud/Exocortex/"))
      )
 
      (setq exocortex-main (concat exocortex "Life/Life.org"))
@@ -1259,7 +1283,7 @@ https://orgmode.org/manual/Custom-agenda-views.html
 ** HTML export
 #+BEGIN_SRC emacs-lisp
 (setq org-html-validation-link nil)
-;(setq org-html-coding-system 'utf-8-unix)
+;; (setq org-html-coding-system 'utf-8-unix)
 #+END_SRC
 ** Export to PDF
 #+BEGIN_SRC emacs-lisp
@@ -1490,7 +1514,8 @@ https://github.com/rpdillon/todotxt.el
 #+BEGIN_SRC emacs-lisp
   (use-package todotxt-mode
     :config
-    (setq todotxt-default-file (expand-file-name "~/Dropbox/Aplikacje/Simpletask/todo.txt"))
+    (setq todotxt-default-file (expand-file-name "~/Nextcloud/Apps/Simpletask/todo.txt"))
+    (setq todotxt-default-archive-file (expand-file-name "~/Nextcloud/Apps/Simpletask/done.txt"))
     :bind
      ("C-c i" . todotxt-add-todo)
      ("C-c t" . todotxt-open-file)
